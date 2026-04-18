@@ -10,7 +10,7 @@ reviews:
   collapse_walkthrough: true
   auto_review:
     enabled: true
-    auto_incremental_review: true
+    auto_incremental_review: false
     drafts: false
 
   path_instructions:

@@ -56,6 +56,12 @@ public record ErrorResponse(
 				.message(fe.getDefaultMessage() != null ? fe.getDefaultMessage() : "")
 				.build()
 		));
+		bindingResult.getGlobalErrors().forEach(oe -> details.add(
+			FieldErrorDetail.builder()
+				.field(oe.getObjectName())
+				.message(oe.getDefaultMessage() != null ? oe.getDefaultMessage() : "")
+				.build()
+		));
 		return ErrorResponse.builder()
 			.status(this.status)
 			.message(this.message)

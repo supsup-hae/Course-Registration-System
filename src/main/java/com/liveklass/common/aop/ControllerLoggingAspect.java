@@ -39,7 +39,7 @@ public class ControllerLoggingAspect {
 			}
 
 			return result;
-		} catch (Exception e) {
+		} catch (Throwable e) {
 			long executionTime = (System.nanoTime() - start) / 1_000_000;
 
 			log.error("[Controller Exception] {}.{} time = {}ms, message = {}",

@@ -49,16 +49,6 @@ public record BaseResponse<T>(
 			.build();
 	}
 
-	public static <T> BaseResponse<T> noContent() {
-		return BaseResponse.<T>builder()
-			.httpStatus(HttpStatus.NO_CONTENT)
-			.success(true)
-			.data(null)
-			.error(null)
-			.timestamp(now())
-			.build();
-	}
-
 	public static <T> BaseResponse<T> accepted() {
 		return BaseResponse.<T>builder()
 			.httpStatus(HttpStatus.ACCEPTED)
