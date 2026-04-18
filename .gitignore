@@ -1,7 +1,7 @@
 HELP.md
 .gradle
 .env
-docs/
+reference/
 build/
 
 ### STS ###
