@@ -1,0 +1,61 @@
+language: "ko-KR"
+early_access: false
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: false
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+
+  path_instructions:
+    - path: "src/main/java/**/*.java"
+      instructions: |
+        버그 가능성, 성능 저하, 보안 위험을 우선 검토하고, SOLID 원칙 위반 여부를 확인한다.
+        논리적 오류, NPE 가능성, 동시성 문제, N+1 쿼리 문제를 비판적으로 검토한다.
+        매직 넘버/스트링, 과도한 매개변수, SRP 위반을 지적한다.
+        명명 규칙 위반, 가독성 저하 요인을 구체적으로 지적한다.
+
+    - path: "src/test/**/*.java"
+      instructions: |
+        실패/예외 케이스 누락, Assertion 부재를 지적한다.
+        Given-When-Then 구조 위반, 불명확한 테스트명을 지적한다.
+        과도한 모킹으로 인한 테스트 신뢰도 저하를 지적한다.
+
+    - path: "**/*.{yml,yaml,properties}"
+      instructions: |
+        민감 정보 평문 노출을 엄격히 검증한다.
+        명명 규칙 불일치, 구조적 비일관성을 지적한다.
+
+  path_filters:
+    - "!**/build/**"
+    - "!**/.gradle/**"
+    - "!**/gradle/wrapper/**"
+    - "!**/gradlew*"
+    - "!**/out/**"
+    - "!**/*.class"
+    - "!**/*.jar"
+    - "!**/*.war"
+    - "!**/node_modules/**"
+    - "!**/.idea/**"
+    - "!**/.vscode/**"
+    - "!**/test-results/**"
+
+chat:
+  auto_reply: true
+
+tone_instructions: "한국어로 답변. 버그·성능·보안·구조 문제 우선 점검, SOLID/DRY/Clean Code 기준 개선 제안. 사실·근거 중심, 추측 금지. 문제점·근거·개선 방향만 작성."
+
+knowledge_base:
+  opt_out: false
+  learnings:
+    scope: auto
+  issues:
+    scope: auto
+  pull_requests:
+    scope: auto
