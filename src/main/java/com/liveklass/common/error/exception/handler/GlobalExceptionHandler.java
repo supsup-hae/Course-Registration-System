@@ -1,6 +1,5 @@
 package com.liveklass.common.error.exception.handler;
 
-import java.nio.file.AccessDeniedException;
 import java.sql.SQLException;
 
 import org.springframework.dao.DataAccessException;
@@ -138,16 +137,6 @@ public class GlobalExceptionHandler {
 		LoggingUtils.logException("DataAccessException 발생", ex, request);
 		ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.fail(response));
-	}
-
-	@ExceptionHandler(AccessDeniedException.class)
-	public ResponseEntity<BaseResponse<ErrorResponse>> handleAccessDeniedException(
-		AccessDeniedException ex,
-		HttpServletRequest request
-	) {
-		LoggingUtils.logException("AccessDeniedException 발생", ex, request);
-		ErrorResponse response = ErrorResponse.of(ErrorCode.ACCESS_DENIED, request);
-		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(BaseResponse.fail(response));
 	}
 
 	@ExceptionHandler(NoResourceFoundException.class)
