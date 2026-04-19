@@ -14,6 +14,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
 import com.liveklass.domain.course.entity.Course;
@@ -23,6 +24,7 @@ import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
+import com.liveklass.domain.user.exception.UserException;
 import com.liveklass.domain.user.service.query.UserQueryService;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,6 +55,7 @@ class CourseFacadeServiceTest {
 
 		// then
 		assertThat(result.status()).isEqualTo(CourseStatus.DRAFT);
+		assertThat(result.courseId()).isNull();
 	}
 
 	@Test
@@ -96,11 +99,11 @@ class CourseFacadeServiceTest {
 		RegisterCourseReqDto dto = new RegisterCourseReqDto(
 			"테스트 강의", null, BigDecimal.valueOf(10000), 10, null, null
 		);
-		given(userQueryService.findById(999L)).willThrow(CourseException.class);
+		given(userQueryService.findById(999L)).willThrow(new UserException(ErrorCode.USER_NOT_FOUND));
 
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.registerCourse(999L, dto))
-			.isInstanceOf(CourseException.class);
+			.isInstanceOf(UserException.class);
 	}
 
 	private User defaultCreator() {
