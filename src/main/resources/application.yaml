@@ -46,3 +46,7 @@ spring:
           provider_disables_autocommit: true
     defer-datasource-initialization: true
     open-in-view: false
+
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR

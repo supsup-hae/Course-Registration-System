@@ -6,6 +6,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
+import com.liveklass.common.error.exception.BusinessException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -35,8 +37,13 @@ public class ServiceLoggingAspect {
 		} finally {
 			long executionTime = (System.nanoTime() - start) / 1_000_000;
 			if (caught != null) {
-				log.error("[Service Exception] {}.{} time = {}ms, message = {}",
-					className, methodName, executionTime, caught.getMessage(), caught);
+				if (caught instanceof BusinessException) {
+					log.warn("[Service BusinessException] {}.{} time = {}ms, message = {}",
+						className, methodName, executionTime, caught.getMessage());
+				} else {
+					log.error("[Service Exception] {}.{} time = {}ms, message = {}",
+						className, methodName, executionTime, caught.getMessage(), caught);
+				}
 			} else {
 				log.debug("[Service End] {}.{} time = {}ms", className, methodName, executionTime);
 				if (executionTime >= SLOW_THRESHOLD_MS) {
