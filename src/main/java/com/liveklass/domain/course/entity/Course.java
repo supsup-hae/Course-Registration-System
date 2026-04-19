@@ -45,7 +45,7 @@ public class Course extends BaseEntity {
 	@Column(name = "description")
 	private String description;
 
-	@Column(name = "price", nullable = false)
+	@Column(name = "price", nullable = false, precision = 12, scale = 0)
 	private BigDecimal price;
 
 	@Column(name = "capacity", nullable = false)
