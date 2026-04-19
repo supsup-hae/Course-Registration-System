@@ -93,7 +93,7 @@ BEGIN
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_courses_to_enrollments') THEN
-        ALTER TABLE courses ADD CONSTRAINT FK_COURSES_TO_ENROLLMENTS FOREIGN KEY (course_id) REFERENCES courses (course_id);
+        ALTER TABLE enrollments ADD CONSTRAINT FK_COURSES_TO_ENROLLMENTS FOREIGN KEY (course_id) REFERENCES courses (course_id);
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ck_enrollments_status') THEN
