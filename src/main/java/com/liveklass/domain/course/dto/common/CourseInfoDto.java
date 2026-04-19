@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.liveklass.domain.course.enums.CourseStatus;
-import com.liveklass.domain.user.dto.common.UserInfo;
+import com.liveklass.domain.user.dto.common.UserInfoDto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -16,7 +16,7 @@ public record CourseInfoDto(
 	Long courseId,
 
 	@Schema(description = "강의 생성자(크리에이터) 정보")
-	UserInfo creator,
+	UserInfoDto creator,
 
 	@Schema(description = "강의 제목", example = "크리투스 전문코치 1:1 코칭 프로그램")
 	String title,
