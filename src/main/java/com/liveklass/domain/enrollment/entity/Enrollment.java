@@ -43,7 +43,7 @@ public class Enrollment extends BaseEntity {
 	private Long courseId;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false, columnDefinition = "enrollment_status")
+	@Column(name = "status", nullable = false)
 	private EnrollmentStatus status;
 
 	@Column(name = "waitlist_order")

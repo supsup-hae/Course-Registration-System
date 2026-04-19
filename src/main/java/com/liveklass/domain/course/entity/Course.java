@@ -39,10 +39,10 @@ public class Course extends BaseEntity {
 	@Column(name = "creator_id", nullable = false)
 	private Long creatorId;
 
-	@Column(name = "title", nullable = false, length = 255)
+	@Column(name = "title", nullable = false)
 	private String title;
 
-	@Column(name = "description", columnDefinition = "TEXT")
+	@Column(name = "description")
 	private String description;
 
 	@Column(name = "price", nullable = false)
@@ -52,7 +52,7 @@ public class Course extends BaseEntity {
 	private Integer capacity;
 
 	@Enumerated(EnumType.STRING)
-	@Column(name = "status", nullable = false, columnDefinition = "course_status")
+	@Column(name = "status", nullable = false)
 	private CourseStatus status;
 
 	@Column(name = "start_date")
