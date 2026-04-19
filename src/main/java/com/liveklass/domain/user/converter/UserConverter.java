@@ -1,6 +1,6 @@
 package com.liveklass.domain.user.converter;
 
-import com.liveklass.domain.user.dto.common.UserInfo;
+import com.liveklass.domain.user.dto.common.UserInfoDto;
 import com.liveklass.domain.user.entity.User;
 
 import lombok.experimental.UtilityClass;
@@ -8,8 +8,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class UserConverter {
 
-	public UserInfo toUserInfo(User user) {
-		return UserInfo.builder()
+	public UserInfoDto toUserInfo(User user) {
+		return UserInfoDto.builder()
 			.userId(user.getUserId())
 			.name(user.getName())
 			.email(user.getEmail())
