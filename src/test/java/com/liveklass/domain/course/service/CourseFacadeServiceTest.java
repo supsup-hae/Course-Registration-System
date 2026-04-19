@@ -56,6 +56,21 @@ class CourseFacadeServiceTest {
 			"테스트 강의", "설명", BigDecimal.valueOf(10000), null, null, null
 		));
 		setCreatorId(creator, 1L);
+
+		lenient().doAnswer(invocation -> {
+			Course course = invocation.getArgument(0);
+			CourseStatus status = invocation.getArgument(1);
+			course.updateStatus(status);
+			return null;
+		}).when(courseCommandService).updateStatus(any(Course.class), any(CourseStatus.class));
+
+		lenient().doAnswer(invocation -> {
+			Course course = invocation.getArgument(0);
+			LocalDateTime startDate = invocation.getArgument(1);
+			LocalDateTime endDate = invocation.getArgument(2);
+			course.openWith(startDate, endDate);
+			return null;
+		}).when(courseCommandService).openWith(any(Course.class), any(), any());
 	}
 
 	@Test

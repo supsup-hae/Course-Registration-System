@@ -50,9 +50,9 @@ public class CourseFacadeService {
 		validateStatusTransition(course, reqDto);
 
 		if (reqDto.status() == CourseStatus.OPEN) {
-			course.openWith(reqDto.startDate(), reqDto.endDate());
+			courseCommandService.openWith(course, reqDto.startDate(), reqDto.endDate());
 		} else {
-			course.updateStatus(reqDto.status());
+			courseCommandService.updateStatus(course, reqDto.status());
 		}
 
 		return CourseConverter.toUpdateStatusResDto(course);
