@@ -67,10 +67,6 @@ public class Course extends BaseEntity {
 	@Column(name = "end_date")
 	private LocalDateTime endDate;
 
-	public boolean isUnlimitedCapacity() {
-		return this.capacity == null;
-	}
-
 	@Builder
 	private Course(
 		User creator,
@@ -103,5 +99,26 @@ public class Course extends BaseEntity {
 			.startDate(dto.startDate())
 			.endDate(dto.endDate())
 			.build();
+	}
+
+	public void updateStatus(final CourseStatus status) {
+		this.status = status;
+	}
+
+	public boolean canTransitionTo(final CourseStatus next) {
+		return switch (this.status) {
+			case DRAFT, CLOSED -> next == CourseStatus.OPEN;
+			case OPEN -> next == CourseStatus.CLOSED;
+		};
+	}
+
+	public void openWith(final LocalDateTime startDate, final LocalDateTime endDate) {
+		this.status = CourseStatus.OPEN;
+		this.startDate = startDate;
+		this.endDate = endDate;
+	}
+
+	public boolean isUnlimitedCapacity() {
+		return this.capacity == null;
 	}
 }
