@@ -28,7 +28,9 @@ import com.liveklass.common.constants.AuthConstants;
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.common.error.exception.BusinessException;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
+import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
+import com.liveklass.domain.course.dto.response.UpdateCourseStatusResDto;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 
@@ -131,5 +133,39 @@ class CourseCommandControllerTest {
 
 	private RegisterCourseReqDto validDto() {
 		return new RegisterCourseReqDto("테스트 강의", null, BigDecimal.valueOf(10000), 10, null, null);
+	}
+
+	@Test
+	@DisplayName("CREATOR 권한으로 강의 상태 변경 API 호출 시 200 반환")
+	void updateStatusCreatorRoleReturns200() throws Exception {
+		// given
+		LocalDateTime start = LocalDateTime.of(2026, 5, 1, 0, 0);
+		UpdateCourseStatusReqDto dto = new UpdateCourseStatusReqDto(CourseStatus.OPEN, start, null);
+		given(courseFacadeService.updateCourseStatus(anyLong(), anyLong(), any()))
+			.willReturn(UpdateCourseStatusResDto.builder()
+				.courseId(1L)
+				.status(CourseStatus.OPEN)
+				.build());
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/courses/1/status")
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "CREATOR")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(dto)))
+			.andExpect(status().isOk());
+	}
+
+	@Test
+	@DisplayName("인증 없이 강의 상태 변경 API 호출 시 403 반환")
+	void updateStatusNoAuthenticationReturns403() throws Exception {
+		// given
+		UpdateCourseStatusReqDto dto = new UpdateCourseStatusReqDto(CourseStatus.OPEN, null, null);
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/courses/1/status")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(dto)))
+			.andExpect(status().isForbidden());
 	}
 }

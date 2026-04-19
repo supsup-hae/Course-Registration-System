@@ -26,7 +26,7 @@ public record RegisterCourseReqDto(
 	@Min(value = 0, message = "가격은 0원 이상이어야 합니다.")
 	BigDecimal price,
 
-	@Schema(description = "수강 정원 (null이면 무제한)", example = "10")
+	@Schema(description = "수강 정원 (인원 제한을 지정하지 않는 경우 null)", example = "10")
 	@Min(value = 1, message = "수강 정원은 1명 이상이어야 합니다.")
 	Integer capacity,
 

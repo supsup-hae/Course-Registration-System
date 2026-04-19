@@ -32,7 +32,9 @@ public enum ErrorCode {
 	/**
 	 * Course Error (CO-xxx)
 	 */
-	INVALID_COURSE_DATE_RANGE(HttpStatus.BAD_REQUEST, "CO-001", "종료일은 시작일보다 이후여야 합니다.");
+	INVALID_COURSE_DATE_RANGE(HttpStatus.BAD_REQUEST, "CO-001", "종료일은 시작일보다 이후여야 합니다."),
+	INVALID_COURSE_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "CO-002", "허용되지 않는 상태 전환입니다."),
+	OPEN_REQUIRES_START_DATE(HttpStatus.BAD_REQUEST, "CO-003", "모집 시작일은 필수입니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;
