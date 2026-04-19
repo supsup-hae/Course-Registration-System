@@ -10,6 +10,7 @@ import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.user.entity.User;
+import com.liveklass.domain.user.enums.Role;
 import com.liveklass.domain.user.service.query.UserQueryService;
 
 import lombok.AccessLevel;
@@ -25,9 +26,16 @@ public class CourseFacadeService {
 	public RegisterCourseResDto registerCourse(final Long creatorId, final RegisterCourseReqDto reqDto) {
 		validateDateRange(reqDto);
 		User creator = userQueryService.findById(creatorId);
+		validateRole(creator);
 		Course course = Course.createDraft(creator, reqDto);
 		Course savedCourse = courseCommandService.registerCourse(course);
 		return CourseConverter.toRegisterResDto(savedCourse);
+	}
+
+	private void validateRole(final User user) {
+		if (user.getRole() != Role.CREATOR) {
+			throw new CourseException(ErrorCode.ACCESS_DENIED);
+		}
 	}
 
 	private void validateDateRange(final RegisterCourseReqDto reqDto) {

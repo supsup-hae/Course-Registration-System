@@ -5,7 +5,7 @@
 ## HikariCP 커넥션 유효성 검증 실패
 
 **증상**
-```
+```text
 WARN HikariPool-1 - Failed to validate connection ... (This connection has been closed.)
 Possibly consider using a shorter maxLifetime value.
 ```
