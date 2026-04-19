@@ -6,7 +6,6 @@ import static org.mockito.BDDMockito.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,16 +14,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.liveklass.common.error.exception.BusinessException;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
+import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
-import com.liveklass.domain.user.repository.UserRepository;
+import com.liveklass.domain.user.service.query.UserQueryService;
 
 @ExtendWith(MockitoExtension.class)
 class CourseFacadeServiceTest {
@@ -33,7 +32,7 @@ class CourseFacadeServiceTest {
 	private CourseCommandService courseCommandService;
 
 	@Mock
-	private UserRepository userRepository;
+	private UserQueryService userQueryService;
 
 	@InjectMocks
 	private CourseFacadeService courseFacadeService;
@@ -45,7 +44,7 @@ class CourseFacadeServiceTest {
 		RegisterCourseReqDto dto = new RegisterCourseReqDto(
 			"테스트 강의", null, BigDecimal.valueOf(10000), 10, null, null
 		);
-		given(userRepository.findById(1L)).willReturn(Optional.of(defaultCreator()));
+		given(userQueryService.findById(1L)).willReturn(defaultCreator());
 		given(courseCommandService.registerCourse(any(Course.class)))
 			.willAnswer(invocation -> invocation.getArgument(0));
 
@@ -63,7 +62,7 @@ class CourseFacadeServiceTest {
 		RegisterCourseReqDto dto = new RegisterCourseReqDto(
 			"테스트 강의", null, BigDecimal.valueOf(10000), null, null, null
 		);
-		given(userRepository.findById(1L)).willReturn(Optional.of(defaultCreator()));
+		given(userQueryService.findById(1L)).willReturn(defaultCreator());
 		given(courseCommandService.registerCourse(any(Course.class)))
 			.willAnswer(invocation -> {
 				Course course = invocation.getArgument(0);
@@ -87,7 +86,7 @@ class CourseFacadeServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.registerCourse(1L, dto))
-			.isInstanceOf(BusinessException.class);
+			.isInstanceOf(CourseException.class);
 	}
 
 	@Test
@@ -97,11 +96,11 @@ class CourseFacadeServiceTest {
 		RegisterCourseReqDto dto = new RegisterCourseReqDto(
 			"테스트 강의", null, BigDecimal.valueOf(10000), 10, null, null
 		);
-		given(userRepository.findById(999L)).willReturn(Optional.empty());
+		given(userQueryService.findById(999L)).willThrow(CourseException.class);
 
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.registerCourse(999L, dto))
-			.isInstanceOf(BusinessException.class);
+			.isInstanceOf(CourseException.class);
 	}
 
 	private User defaultCreator() {
