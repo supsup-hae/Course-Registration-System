@@ -7,17 +7,17 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.liveklass.common.constants.AuthConstants;
 import com.liveklass.domain.user.enums.Role;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class HeaderAuthenticationFilter extends OncePerRequestFilter {
-
-	private static final String HEADER_USER_ID = "X-User-Id";
-	private static final String HEADER_USER_ROLE = "X-User-Role";
 
 	@Override
 	protected void doFilterInternal(
@@ -25,8 +25,8 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 		HttpServletResponse response,
 		@NonNull FilterChain filterChain
 	) throws ServletException, IOException {
-		String userIdHeader = request.getHeader(HEADER_USER_ID);
-		String roleHeader = request.getHeader(HEADER_USER_ROLE);
+		String userIdHeader = request.getHeader(AuthConstants.HEADER_USER_ID);
+		String roleHeader = request.getHeader(AuthConstants.HEADER_USER_ROLE);
 
 		if (userIdHeader != null && roleHeader != null) {
 			try {
