@@ -2,23 +2,46 @@ spring:
   application:
     name: Course-Registration-System
 
+  web:
+    resources:
+      add-mappings: false
+
   datasource:
     url: jdbc:postgresql://localhost:5432/${POSTGRES_DBNAME}
     username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: false
-    properties:
-      hibernate:
-        format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 10
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      auto-commit: false
 
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD}
+
+  threads:
+    virtual:
+      enabled: true
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+        use_sql_comments: false
+        criteria:
+          literal_handling_mode: bind
+        query:
+          in_clause_parameter_padding: true
+        connection:
+          provider_disables_autocommit: true
+    defer-datasource-initialization: true
+    open-in-view: false
