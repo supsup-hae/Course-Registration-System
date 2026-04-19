@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -36,6 +38,24 @@ public class GlobalExceptionHandler {
 		LoggingUtils.logException("지정되지 않은 예외 발생", ex, request);
 		ErrorResponse response = ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request);
 		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(BaseResponse.fail(response));
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<BaseResponse<ErrorResponse>> handleAccessDeniedException(
+		AccessDeniedException ex,
+		HttpServletRequest request
+	) {
+		ErrorResponse response = ErrorResponse.of(ErrorCode.ACCESS_DENIED, request);
+		return ResponseEntity.status(HttpStatus.FORBIDDEN).body(BaseResponse.fail(response));
+	}
+
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<BaseResponse<ErrorResponse>> handleAuthenticationException(
+		AuthenticationException ex,
+		HttpServletRequest request
+	) {
+		ErrorResponse response = ErrorResponse.of(ErrorCode.UNAUTHORIZED, request);
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(BaseResponse.fail(response));
 	}
 
 	@ExceptionHandler(BusinessException.class)

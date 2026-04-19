@@ -16,7 +16,8 @@ spring:
       minimum-idle: 10
       connection-timeout: 30000
       idle-timeout: 600000
-      max-lifetime: 1800000
+      max-lifetime: 600000
+      keepalive-time: 60000
       auto-commit: false
 
   data:
@@ -45,3 +46,7 @@ spring:
           provider_disables_autocommit: true
     defer-datasource-initialization: true
     open-in-view: false
+
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR

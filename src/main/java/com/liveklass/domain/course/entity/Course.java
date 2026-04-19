@@ -4,16 +4,21 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.liveklass.common.entity.BaseEntity;
+import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.enums.CourseStatus;
+import com.liveklass.domain.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -36,8 +41,9 @@ public class Course extends BaseEntity {
 	@Column(name = "course_id")
 	private Long courseId;
 
-	@Column(name = "creator_id", nullable = false)
-	private Long creatorId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "creator_id", nullable = false)
+	private User creator;
 
 	@Column(name = "title", nullable = false)
 	private String title;
@@ -48,7 +54,7 @@ public class Course extends BaseEntity {
 	@Column(name = "price", nullable = false, precision = 12, scale = 0)
 	private BigDecimal price;
 
-	@Column(name = "capacity", nullable = false)
+	@Column(name = "capacity")
 	private Integer capacity;
 
 	@Enumerated(EnumType.STRING)
@@ -61,9 +67,13 @@ public class Course extends BaseEntity {
 	@Column(name = "end_date")
 	private LocalDateTime endDate;
 
+	public boolean isUnlimitedCapacity() {
+		return this.capacity == null;
+	}
+
 	@Builder
 	private Course(
-		Long creatorId,
+		User creator,
 		String title,
 		String description,
 		BigDecimal price,
@@ -72,7 +82,7 @@ public class Course extends BaseEntity {
 		LocalDateTime startDate,
 		LocalDateTime endDate
 	) {
-		this.creatorId = creatorId;
+		this.creator = creator;
 		this.title = title;
 		this.description = description;
 		this.price = price;
@@ -82,24 +92,16 @@ public class Course extends BaseEntity {
 		this.endDate = endDate;
 	}
 
-	public static Course createDraft(
-		final Long creatorId,
-		final String title,
-		final String description,
-		final BigDecimal price,
-		final Integer capacity,
-		final LocalDateTime startDate,
-		final LocalDateTime endDate
-	) {
+	public static Course createDraft(final User creator, final RegisterCourseReqDto dto) {
 		return Course.builder()
-			.creatorId(creatorId)
-			.title(title)
-			.description(description)
-			.price(price)
-			.capacity(capacity)
+			.creator(creator)
+			.title(dto.title())
+			.description(dto.description())
+			.price(dto.price())
+			.capacity(dto.capacity())
 			.status(CourseStatus.DRAFT)
-			.startDate(startDate)
-			.endDate(endDate)
+			.startDate(dto.startDate())
+			.endDate(dto.endDate())
 			.build();
 	}
 }

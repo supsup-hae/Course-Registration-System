@@ -8,6 +8,8 @@ import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
+import com.liveklass.common.error.exception.BusinessException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,7 +34,7 @@ public class ControllerLoggingAspect {
 			Object result = joinPoint.proceed();
 			long executionTime = (System.nanoTime() - start) / 1_000_000;
 
-			log.info("[Controller Response] {}.{} time = {}ms", className, methodName, executionTime);
+			log.debug("[Controller Response] {}.{} time = {}ms", className, methodName, executionTime);
 
 			if (executionTime >= SLOW_THRESHOLD_MS) {
 				log.warn("[Slow Controller] {}.{} executed in {}ms", className, methodName, executionTime);
@@ -42,8 +44,10 @@ public class ControllerLoggingAspect {
 		} catch (Throwable e) {
 			long executionTime = (System.nanoTime() - start) / 1_000_000;
 
-			log.error("[Controller Exception] {}.{} time = {}ms, message = {}",
-				className, methodName, executionTime, e.getMessage(), e);
+			if (!(e instanceof BusinessException)) {
+				log.error("[Controller Exception] {}.{} time = {}ms, message = {}",
+					className, methodName, executionTime, e.getMessage(), e);
+			}
 
 			throw e;
 		}
