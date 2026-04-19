@@ -94,11 +94,15 @@ public class Enrollment extends BaseEntity {
 
 	public void isConfirmed() {
 		this.status = EnrollmentStatus.CONFIRMED;
-		this.confirmedAt = LocalDateTime.now();
+		if (this.confirmedAt == null) {
+			this.confirmedAt = LocalDateTime.now();
+		}
 	}
 
 	public void isCancelled() {
 		this.status = EnrollmentStatus.CANCELLED;
-		this.cancelledAt = LocalDateTime.now();
+		if (this.cancelledAt == null) {
+			this.cancelledAt = LocalDateTime.now();
+		}
 	}
 }
