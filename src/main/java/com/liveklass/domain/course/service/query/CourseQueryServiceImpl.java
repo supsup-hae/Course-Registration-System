@@ -25,4 +25,11 @@ public class CourseQueryServiceImpl implements CourseQueryService {
 		log.info("[Course] 강의 조회 : id = {}", courseId);
 		return course;
 	}
+
+	public Course findByIdWithCreator(final Long courseId) {
+		Course course = courseRepository.findByIdWithCreator(courseId)
+			.orElseThrow(() -> new CourseException(ErrorCode.NOT_FOUND));
+		log.info("[Course] 강의 조회(fetch join) : id = {}", courseId);
+		return course;
+	}
 }
