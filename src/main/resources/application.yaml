@@ -50,3 +50,12 @@ spring:
 logging:
   level:
     org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+
+springdoc:
+  swagger-ui:
+    display-request-duration: true
+    operations-sorter: alpha
+    try-it-out-enabled: true
+    tags-sorter: alpha
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
