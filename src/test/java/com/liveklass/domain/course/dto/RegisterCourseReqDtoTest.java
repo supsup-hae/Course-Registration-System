@@ -25,7 +25,7 @@ class RegisterCourseReqDtoTest {
 	}
 
 	@Test
-	@DisplayName("capacity가 null이면 유효성 검사 통과 (무제한 정원)")
+	@DisplayName("capacity가 null이면 유효성 검사를 통과한다 (인원 제한 없음)")
 	void nullCapacityPassesValidation() {
 		// given
 		RegisterCourseReqDto dto = new RegisterCourseReqDto(
