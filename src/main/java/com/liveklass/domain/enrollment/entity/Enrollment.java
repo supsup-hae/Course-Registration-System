@@ -3,16 +3,21 @@ package com.liveklass.domain.enrollment.entity;
 import java.time.LocalDateTime;
 
 import com.liveklass.common.entity.BaseEntity;
+import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
+import com.liveklass.domain.user.entity.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -36,11 +41,13 @@ public class Enrollment extends BaseEntity {
 	@Column(name = "enrollment_id")
 	private Long enrollmentId;
 
-	@Column(name = "student_id", nullable = false)
-	private Long studentId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "student_id", nullable = false)
+	private User student;
 
-	@Column(name = "course_id", nullable = false)
-	private Long courseId;
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "course_id", nullable = false)
+	private Course course;
 
 	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
@@ -57,31 +64,41 @@ public class Enrollment extends BaseEntity {
 
 	@Builder
 	private Enrollment(
-		final Long studentId,
-		final Long courseId,
+		final User student,
+		final Course course,
 		final EnrollmentStatus status,
 		final Integer waitlistOrder
 	) {
-		this.studentId = studentId;
-		this.courseId = courseId;
+		this.student = student;
+		this.course = course;
 		this.status = status;
 		this.waitlistOrder = waitlistOrder;
 	}
 
-	public static Enrollment pending(final Long studentId, final Long courseId) {
+	public static Enrollment pending(final User student, final Course course) {
 		return Enrollment.builder()
-			.studentId(studentId)
-			.courseId(courseId)
+			.student(student)
+			.course(course)
 			.status(EnrollmentStatus.PENDING)
 			.build();
 	}
 
-	public static Enrollment waitlisted(final Long studentId, final Long courseId, final Integer waitlistOrder) {
+	public static Enrollment waitlisted(final User student, final Course course, final Integer waitlistOrder) {
 		return Enrollment.builder()
-			.studentId(studentId)
-			.courseId(courseId)
+			.student(student)
+			.course(course)
 			.status(EnrollmentStatus.WAITLISTED)
 			.waitlistOrder(waitlistOrder)
 			.build();
+	}
+
+	public void isConfirmed() {
+		this.status = EnrollmentStatus.CONFIRMED;
+		this.confirmedAt = LocalDateTime.now();
+	}
+
+	public void isCancelled() {
+		this.status = EnrollmentStatus.CANCELLED;
+		this.cancelledAt = LocalDateTime.now();
 	}
 }
