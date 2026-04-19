@@ -16,7 +16,8 @@ spring:
       minimum-idle: 10
       connection-timeout: 30000
       idle-timeout: 600000
-      max-lifetime: 1800000
+      max-lifetime: 600000
+      keepalive-time: 60000
       auto-commit: false
 
   data:
