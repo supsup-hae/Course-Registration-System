@@ -139,7 +139,8 @@ class CourseCommandControllerTest {
 	@DisplayName("CREATOR 권한으로 강의 상태 변경 API 호출 시 200 반환")
 	void updateStatusCreatorRoleReturns200() throws Exception {
 		// given
-		UpdateCourseStatusReqDto dto = new UpdateCourseStatusReqDto(CourseStatus.OPEN, null, null);
+		LocalDateTime start = LocalDateTime.of(2026, 5, 1, 0, 0);
+		UpdateCourseStatusReqDto dto = new UpdateCourseStatusReqDto(CourseStatus.OPEN, start, null);
 		given(courseFacadeService.updateCourseStatus(anyLong(), anyLong(), any()))
 			.willReturn(UpdateCourseStatusResDto.builder()
 				.courseId(1L)

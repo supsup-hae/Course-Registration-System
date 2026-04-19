@@ -14,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
@@ -218,11 +217,38 @@ class CourseFacadeServiceTest {
 		assertThat(result.status()).isEqualTo(CourseStatus.OPEN);
 	}
 
+	@Test
+	@DisplayName("OPEN 강의를 CLOSED로 전환 성공")
+	void updateStatusOpenToClosedSuccess() {
+		// given
+		Long userId = 1L;
+		Long courseId = 1L;
+		Course openCourse = Course.createDraft(creator, new RegisterCourseReqDto(
+			"테스트 강의", "설명", BigDecimal.valueOf(10000), null, null, null
+		));
+		openCourse.openWith(LocalDateTime.of(2026, 5, 1, 0, 0), null);
+
+		UpdateCourseStatusReqDto reqDto = new UpdateCourseStatusReqDto(CourseStatus.CLOSED, null, null);
+		given(courseQueryService.findById(courseId)).willReturn(openCourse);
+
+		// when
+		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
+
+		// then
+		assertThat(result.status()).isEqualTo(CourseStatus.CLOSED);
+	}
+
 	private User defaultCreator() {
 		return User.create("테스트 크리에이터", "creator@test.com", "password", Role.CREATOR);
 	}
 
 	private void setCreatorId(final User user, final Long id) {
-		ReflectionTestUtils.setField(user, "userId", id);
+		try {
+			var field = User.class.getDeclaredField("userId");
+			field.setAccessible(true);
+			field.set(user, id);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 }
