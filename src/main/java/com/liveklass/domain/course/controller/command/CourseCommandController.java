@@ -1,4 +1,4 @@
-package com.liveklass.domain.course.controller;
+package com.liveklass.domain.course.controller.command;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
