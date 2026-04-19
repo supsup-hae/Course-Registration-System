@@ -2,6 +2,7 @@ package com.liveklass.domain.course.service.facade;
 
 import java.time.LocalDateTime;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,9 +62,9 @@ public class CourseFacadeService {
 		return CourseConverter.toUpdateStatusResDto(course);
 	}
 
-	@Transactional(readOnly = true)
+	@Cacheable(cacheNames = "course:detail", key = "#courseId")
 	public CourseInfoDto findCourseDetail(final Long courseId) {
-		Course course = courseQueryService.findById(courseId);
+		Course course = courseQueryService.findByIdWithCreator(courseId);
 		UserInfoDto creatorInfo = UserConverter.toUserInfo(course.getCreator());
 		return CourseConverter.toCourseInfoDto(course, creatorInfo);
 	}
