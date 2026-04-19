@@ -53,6 +53,61 @@ Jenkins 대비 별도 서버 없이 GitHub 저장소와 즉시 연동된다. PR 
 
 ## 데이터 모델 설명
 
+### ERD
+
+<!-- ERD 캡처 이미지 -->
+
+<img src="src/main/resources/image/img.png" alt="ERD" width="50%">
+
+### 테이블 설명
+
+#### `users`
+
+| 컬럼                          | 타입           | 설명                    |
+|-----------------------------|--------------|-----------------------|
+| `user_id`                   | BIGINT (PK)  | 자동 증가 식별자             |
+| `name`                      | VARCHAR(100) | 사용자 이름                |
+| `email`                     | VARCHAR(255) | 로그인 이메일 (유니크)         |
+| `password`                  | VARCHAR(255) | 비밀번호                  |
+| `role`                      | ENUM         | `STUDENT` / `CREATOR` |
+| `created_at` / `updated_at` | TIMESTAMP    | JPA Auditing 자동 기록    |
+
+#### `courses`
+
+| 컬럼                          | 타입                  | 설명                          |
+|-----------------------------|---------------------|-----------------------------|
+| `course_id`                 | BIGINT (PK)         | 자동 증가 식별자                   |
+| `creator_id`                | BIGINT (FK → users) | 강의를 개설한 크리에이터               |
+| `title`                     | VARCHAR(255)        | 강의 제목                       |
+| `description`               | TEXT                | 강의 설명                       |
+| `price`                     | NUMERIC(12, 0)      | 수강료 (원 단위)                  |
+| `capacity`                  | INT                 | 최대 수강 정원                    |
+| `status`                    | ENUM                | `DRAFT` / `OPEN` / `CLOSED` |
+| `start_date` / `end_date`   | TIMESTAMP           | 수강 기간                       |
+| `created_at` / `updated_at` | TIMESTAMP           | JPA Auditing 자동 기록          |
+
+#### `enrollments`
+
+| 컬럼                          | 타입                    | 설명                                                   |
+|-----------------------------|-----------------------|------------------------------------------------------|
+| `enrollment_id`             | BIGINT (PK)           | 자동 증가 식별자                                            |
+| `student_id`                | BIGINT (FK → users)   | 수강 신청한 학생                                            |
+| `course_id`                 | BIGINT (FK → courses) | 신청 대상 강의                                             |
+| `status`                    | ENUM                  | `PENDING` / `CONFIRMED` / `CANCELLED` / `WAITLISTED` |
+| `waitlist_order`            | INT                   | 대기열 순서 (WAITLISTED 상태일 때만 사용)                        |
+| `confirmed_at`              | TIMESTAMP             | 결제 확정 시각                                             |
+| `cancelled_at`              | TIMESTAMP             | 취소 처리 시각                                             |
+| `created_at` / `updated_at` | TIMESTAMP             | JPA Auditing 자동 기록                                   |
+
+### 주요 제약 조건
+
+- `courses.capacity > 0` — CHECK 제약
+- `courses.price >= 0` — CHECK 제약
+- `enrollments (student_id, course_id) WHERE status IN ('PENDING', 'CONFIRMED', 'WAITLISTED')` — 부분 유니크 인덱스로 활성 상태 중복 신청
+  방지, CANCELLED 이력은 보존 ([Q3](docs/QUESTIONS.md))
+
+---
+
 ## 요구사항 해석 및 가정
 
 > [!NOTE]
