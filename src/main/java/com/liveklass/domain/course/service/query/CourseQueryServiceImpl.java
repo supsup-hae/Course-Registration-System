@@ -39,8 +39,9 @@ public class CourseQueryServiceImpl implements CourseQueryService {
 
 	@Override
 	public Page<Course> findAllWithFilters(final FindCoursesReqDto reqDto) {
-		log.info("[Course] 강의 목록 필터 조회 : status = {}, minPrice = {}, maxPrice = {}, hasCapacity = {}, page = {}, size = {}",
-			reqDto.getStatus(), reqDto.getMinPrice(), reqDto.getMaxPrice(), reqDto.getHasCapacity(), reqDto.getPage(), reqDto.getSize());
+		log.info("[Course] 강의 목록 필터 조회 : status={}, minPrice={}, maxPrice={}, hasCapacity={}, page={}, size={}",
+			reqDto.getStatus(), reqDto.getMinPrice(), reqDto.getMaxPrice(),
+			reqDto.getHasCapacity(), reqDto.getPage(), reqDto.getSize());
 
 		PageRequest pageable = PageRequest.of(reqDto.getPage(), reqDto.getSize());
 		return courseRepository.findAllWithFilters(
