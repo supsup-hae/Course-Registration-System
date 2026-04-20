@@ -65,6 +65,7 @@ public class CourseFacadeService {
 	@Cacheable(cacheNames = "course:detail", key = "#courseId")
 	public CourseInfoDto findCourseDetail(final Long courseId) {
 		Course course = courseQueryService.findByIdWithCreator(courseId);
+		//TODO 현재 신청 인원 정보 포함 호출 로직 작성 예정
 		UserInfoDto creatorInfo = UserConverter.toUserInfo(course.getCreator());
 		return CourseConverter.toCourseInfoDto(course, creatorInfo);
 	}
