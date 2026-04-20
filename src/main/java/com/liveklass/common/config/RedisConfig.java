@@ -7,7 +7,6 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.data.redis.repository.configuration.EnableRedisRepositories;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -19,7 +18,6 @@ import com.liveklass.domain.course.entity.Course;
 import lombok.RequiredArgsConstructor;
 
 @Configuration
-@EnableRedisRepositories
 @EnableConfigurationProperties(RedisProperties.class)
 @RequiredArgsConstructor
 public class RedisConfig {
@@ -40,16 +38,17 @@ public class RedisConfig {
 
 	@Bean
 	public RedisTemplate<String, Course> courseRedisTemplate() {
-		return createGzipJsonRedisTemplate(objectMapper, new TypeReference<>() {
+		return createGzipJsonRedisTemplate(redisConnectionFactory(), objectMapper, new TypeReference<>() {
 		});
 	}
 
 	private <V> RedisTemplate<String, V> createGzipJsonRedisTemplate(
+		RedisConnectionFactory connectionFactory,
 		ObjectMapper objectMapper,
 		TypeReference<V> typeRef
 	) {
 		RedisTemplate<String, V> redisTemplate = new RedisTemplate<>();
-		redisTemplate.setConnectionFactory(redisConnectionFactory());
+		redisTemplate.setConnectionFactory(connectionFactory);
 		redisTemplate.setKeySerializer(new StringRedisSerializer());
 		redisTemplate.setValueSerializer(new GzipRedisSerializer<>(objectMapper, typeRef));
 		return redisTemplate;
