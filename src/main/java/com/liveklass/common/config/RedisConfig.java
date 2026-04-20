@@ -37,6 +37,12 @@ public class RedisConfig {
 	}
 
 	@Bean
+	public RedisTemplate<String, String> stringRedisTemplate() {
+		return createGzipJsonRedisTemplate(redisConnectionFactory(), objectMapper, new TypeReference<>() {
+		});
+	}
+
+	@Bean
 	public RedisTemplate<String, Course> courseRedisTemplate() {
 		return createGzipJsonRedisTemplate(redisConnectionFactory(), objectMapper, new TypeReference<>() {
 		});
