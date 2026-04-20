@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.liveklass.common.error.ErrorCode;
+import com.liveklass.domain.course.dto.common.CourseInfoDto;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -251,6 +252,38 @@ class CourseFacadeServiceTest {
 
 		// then
 		assertThat(result.status()).isEqualTo(CourseStatus.CLOSED);
+	}
+
+	@Test
+	@DisplayName("강의가 존재하면 CourseInfoDto 반환")
+	void findCourseDetail_강의가_존재하면_CourseInfoDto_반환() {
+		// given
+		Long courseId = 1L;
+		given(courseQueryService.findByIdWithCreator(courseId)).willReturn(draftCourse);
+
+		// when
+		CourseInfoDto result = courseFacadeService.findCourseDetail(courseId);
+
+		// then
+		assertThat(result.title()).isEqualTo(draftCourse.getTitle());
+		assertThat(result.status()).isEqualTo(CourseStatus.DRAFT);
+		assertThat(result.creator().name()).isEqualTo(creator.getName());
+		assertThat(result.creator().email()).isEqualTo(creator.getEmail());
+	}
+
+	@Test
+	@DisplayName("존재하지 않는 강의 조회 시 NOT_FOUND 예외 발생")
+	void findCourseDetail_존재하지_않는_강의면_NOT_FOUND_예외() {
+		// given
+		Long courseId = 999L;
+		given(courseQueryService.findByIdWithCreator(courseId))
+			.willThrow(new CourseException(ErrorCode.NOT_FOUND));
+
+		// when & then
+		assertThatThrownBy(() -> courseFacadeService.findCourseDetail(courseId))
+			.isInstanceOf(CourseException.class)
+			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+				.isEqualTo(ErrorCode.NOT_FOUND));
 	}
 
 	private User defaultCreator() {
