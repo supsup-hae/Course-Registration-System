@@ -1,4 +1,25 @@
 services:
+  app:
+    build: .
+    container_name: course-registration-app
+    ports:
+      - "8080:8080"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DBNAME: ${POSTGRES_DBNAME}
+      POSTGRES_USERNAME: ${POSTGRES_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
   postgres:
     image: postgres:18.3
     container_name: postgres
@@ -28,7 +49,12 @@ services:
     volumes:
       - redis_data:/data
       - ./config/redis.conf:/usr/local/etc/redis/redis.conf
-    command: redis-server /usr/local/etc/redis/redis.conf --requirepass ${REDIS_PASSWORD}
+    # t3.xlarge 기반 Redis 튜닝: maxmemory 1GB, allkeys-lru 정책
+    command: >
+      redis-server /usr/local/etc/redis/redis.conf
+      --requirepass ${REDIS_PASSWORD}
+      --maxmemory 1gb
+      --maxmemory-policy allkeys-lru
     networks:
       - app-network
     healthcheck:

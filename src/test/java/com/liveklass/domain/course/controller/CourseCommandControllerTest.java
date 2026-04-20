@@ -27,6 +27,7 @@ import com.liveklass.common.config.SecurityConfig;
 import com.liveklass.common.constants.AuthConstants;
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.common.error.exception.BusinessException;
+import com.liveklass.domain.course.controller.command.CourseCommandController;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;

@@ -2,10 +2,14 @@ package com.liveklass.domain.course.service.facade;
 
 import java.time.LocalDateTime;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.converter.CourseConverter;
+import com.liveklass.domain.course.dto.common.CourseInfoDto;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -15,11 +19,12 @@ import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
+import com.liveklass.domain.user.converter.UserConverter;
+import com.liveklass.domain.user.dto.common.UserInfoDto;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
 import com.liveklass.domain.user.service.query.UserQueryService;
 
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
@@ -42,6 +47,7 @@ public class CourseFacadeService {
 	}
 
 	@Transactional
+	@CacheEvict(cacheNames = "course:detail", key = "#courseId")
 	public UpdateCourseStatusResDto updateCourseStatus(
 		final Long userId, final Long courseId, final UpdateCourseStatusReqDto reqDto
 	) {
@@ -56,6 +62,14 @@ public class CourseFacadeService {
 		}
 
 		return CourseConverter.toUpdateStatusResDto(course);
+	}
+
+	@Cacheable(cacheNames = "course:detail", key = "#courseId")
+	public CourseInfoDto findCourseDetail(final Long courseId) {
+		Course course = courseQueryService.findByIdWithCreator(courseId);
+		//TODO 현재 신청 인원 정보 포함 호출 로직 작성 예정
+		UserInfoDto creatorInfo = UserConverter.toUserInfo(course.getCreator());
+		return CourseConverter.toCourseInfoDto(course, creatorInfo);
 	}
 
 	private void validateRole(final User user) {

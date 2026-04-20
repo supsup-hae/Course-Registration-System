@@ -23,6 +23,10 @@ public enum ErrorCode {
 	UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "C-008", "지원하지 않는 미디어 타입입니다."),
 	DATA_INTEGRITY_VIOLATION(HttpStatus.CONFLICT, "C-009", "데이터 무결성 위반입니다."),
 	OPTIMISTIC_LOCK_CONFLICT(HttpStatus.CONFLICT, "C-010", "동시 요청으로 인한 충돌이 발생했습니다. 다시 시도해 주세요."),
+	SERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C-011", "데이터 직렬화 중 오류가 발생했습니다."),
+	DESERIALIZE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C-012", "데이터 역직렬화 중 오류가 발생했습니다."),
+	GZIP_COMPRESS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C-013", "데이터 압축 중 오류가 발생했습니다."),
+	GZIP_DECOMPRESS_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C-014", "데이터 압축 해제 중 오류가 발생했습니다."),
 
 	/**
 	 * User Error (U-xxx)

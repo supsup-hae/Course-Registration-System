@@ -3,12 +3,12 @@ package com.liveklass.domain.course.service.command;
 import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.repository.CourseRepository;
 
-import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
