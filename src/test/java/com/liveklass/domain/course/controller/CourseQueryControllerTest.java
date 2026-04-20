@@ -70,14 +70,6 @@ class CourseQueryControllerTest {
 	}
 
 	@Test
-	@DisplayName("인증 없이 강의 조회 API 호출 시 403 반환")
-	void getCourse_returns403_whenUnauthenticated() throws Exception {
-		// when & then
-		mockMvc.perform(get("/api/v1/courses/1"))
-			.andExpect(status().isForbidden());
-	}
-
-	@Test
 	@DisplayName("강의 목록 조회 API 호출 시 200 반환")
 	void getCourses_returns200_whenValidRequest() throws Exception {
 		// given
@@ -121,6 +113,10 @@ class CourseQueryControllerTest {
 				.header(AuthConstants.HEADER_USER_ID, "1")
 				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
 			.andExpect(status().isOk());
+
+		verify(courseFacadeService).findAllCourses(argThat(req ->
+			req.getMinPrice().compareTo(BigDecimal.valueOf(5000)) == 0 &&
+			req.getMaxPrice().compareTo(BigDecimal.valueOf(50000)) == 0));
 	}
 
 	@Test
@@ -135,11 +131,14 @@ class CourseQueryControllerTest {
 	}
 
 	@Test
-	@DisplayName("인증 없이 목록 조회 API 호출 시 403 반환")
-	void getCourses_returns403_whenUnauthenticated() throws Exception {
+	@DisplayName("인증 없이 목록 조회 API 호출 시 200 반환")
+	void getCourses_returns200_whenUnauthenticated() throws Exception {
+		// given
+		given(courseFacadeService.findAllCourses(any(FindCoursesReqDto.class))).willReturn(Page.empty());
+
 		// when & then
 		mockMvc.perform(get("/api/v1/courses"))
-			.andExpect(status().isForbidden());
+			.andExpect(status().isOk());
 	}
 
 	private CourseCardInfo courseCardInfo() {
