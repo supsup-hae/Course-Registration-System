@@ -2,6 +2,7 @@ package com.liveklass.domain.course.service.facade;
 
 import java.time.LocalDateTime;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +47,7 @@ public class CourseFacadeService {
 	}
 
 	@Transactional
+	@CacheEvict(cacheNames = "course:detail", key = "#courseId")
 	public UpdateCourseStatusResDto updateCourseStatus(
 		final Long userId, final Long courseId, final UpdateCourseStatusReqDto reqDto
 	) {
