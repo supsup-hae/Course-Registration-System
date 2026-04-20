@@ -10,23 +10,22 @@ import org.springframework.util.StreamUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.liveklass.common.error.ErrorCode;
-import com.liveklass.common.error.exception.BusinessException;
 
 import lombok.RequiredArgsConstructor;
 
-
 @RequiredArgsConstructor
 public class GzipRedisSerializer<T> implements RedisSerializer<T> {
+
+	private final ObjectMapper objectMapper;
+	private final TypeReference<T> typeRef;
 
 	private static final byte[] GZIP_MAGIC_BYTES = new byte[] {
 		(byte)(GZIPInputStream.GZIP_MAGIC & 0xFF),
 		(byte)((GZIPInputStream.GZIP_MAGIC >> 8) & 0xFF)
 	};
+
 	private static final int MIN_COMPRESS_SIZE = 2 * 1024; // 2KB 기준
 	private static final int BUFFER_SIZE = 2 * 1024; // 버퍼 크기
-	private final ObjectMapper objectMapper;
-	private final TypeReference<T> typeRef;
 
 	@Override
 	public byte[] serialize(T value) {
@@ -37,10 +36,8 @@ public class GzipRedisSerializer<T> implements RedisSerializer<T> {
 		try {
 			byte[] bytes = objectMapper.writeValueAsBytes(value);
 			return bytes.length > MIN_COMPRESS_SIZE ? compress(bytes) : bytes;
-		} catch (BusinessException ex) {
-			throw ex;
-		} catch (Exception _) {
-			throw new BusinessException(ErrorCode.SERIALIZE_ERROR);
+		} catch (Exception ex) {
+			throw new IllegalStateException("Serialize error", ex);
 		}
 	}
 
@@ -53,10 +50,8 @@ public class GzipRedisSerializer<T> implements RedisSerializer<T> {
 		try {
 			byte[] data = isGzipCompressed(bytes) ? decompress(bytes) : bytes;
 			return objectMapper.readValue(data, typeRef);
-		} catch (BusinessException ex) {
-			throw ex;
-		} catch (Exception _) {
-			throw new BusinessException(ErrorCode.DESERIALIZE_ERROR);
+		} catch (Exception ex) {
+			throw new IllegalStateException("Deserialize error", ex);
 		}
 	}
 
@@ -68,8 +63,8 @@ public class GzipRedisSerializer<T> implements RedisSerializer<T> {
 			gos.write(original);
 			gos.finish();
 			return bos.toByteArray();
-		} catch (Exception _) {
-			throw new BusinessException(ErrorCode.GZIP_COMPRESS_ERROR);
+		} catch (Exception ex) {
+			throw new RuntimeException("Gzip compress error", ex);
 		}
 	}
 
@@ -79,9 +74,9 @@ public class GzipRedisSerializer<T> implements RedisSerializer<T> {
 			RawBufferByteArrayOutputStream out = new RawBufferByteArrayOutputStream(BUFFER_SIZE)
 		) {
 			StreamUtils.copy(gis, out);
-			return out.toByteArray();
-		} catch (Exception _) {
-			throw new BusinessException(ErrorCode.GZIP_DECOMPRESS_ERROR);
+			return out.getRawByteArray();
+		} catch (Exception ex) {
+			throw new RuntimeException("Gzip decompress error", ex);
 		}
 	}
 
