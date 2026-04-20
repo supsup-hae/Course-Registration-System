@@ -15,8 +15,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+
 import com.liveklass.common.error.ErrorCode;
+import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
+import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -284,6 +291,89 @@ class CourseFacadeServiceTest {
 			.isInstanceOf(CourseException.class)
 			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
 				.isEqualTo(ErrorCode.NOT_FOUND));
+	}
+
+	@Test
+	@DisplayName("필터 없이 목록 조회 시 전체 강의 카드 반환")
+	void findAllCourses_필터없으면_전체_반환() {
+		// given
+		FindCoursesReqDto reqDto = new FindCoursesReqDto();
+		Page<Course> coursePage = new PageImpl<>(List.of(draftCourse));
+		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(coursePage);
+
+		// when
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+
+		// then
+		assertThat(result.getTotalElements()).isEqualTo(1);
+		assertThat(result.getContent().get(0).title()).isEqualTo(draftCourse.getTitle());
+		assertThat(result.getContent().get(0).creator().name()).isEqualTo(creator.getName());
+	}
+
+	@Test
+	@DisplayName("status 필터로 OPEN 강의만 조회")
+	void findAllCourses_status_필터_적용() {
+		// given
+		FindCoursesReqDto reqDto = new FindCoursesReqDto();
+		reqDto.setStatus(CourseStatus.OPEN);
+		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(Page.empty());
+
+		// when
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+
+		// then
+		assertThat(result.getTotalElements()).isZero();
+	}
+
+	@Test
+	@DisplayName("가격 범위 필터 적용 시 해당 범위 강의만 반환")
+	void findAllCourses_가격범위_필터_적용() {
+		// given
+		FindCoursesReqDto reqDto = new FindCoursesReqDto();
+		reqDto.setMinPrice(BigDecimal.valueOf(5000));
+		reqDto.setMaxPrice(BigDecimal.valueOf(20000));
+		Page<Course> coursePage = new PageImpl<>(List.of(draftCourse));
+		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(coursePage);
+
+		// when
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+
+		// then
+		assertThat(result.getContent().get(0).price()).isEqualByComparingTo(BigDecimal.valueOf(10000));
+	}
+
+	@Test
+	@DisplayName("hasCapacity=true 필터 시 정원 있는 강의만 반환")
+	void findAllCourses_hasCapacity_필터_적용() {
+		// given
+		FindCoursesReqDto reqDto = new FindCoursesReqDto();
+		reqDto.setHasCapacity(true);
+		Course courseWithCapacity = Course.createDraft(creator, new RegisterCourseReqDto(
+			"정원 있는 강의", "설명", BigDecimal.valueOf(10000), 20, null, null
+		));
+		Page<Course> coursePage = new PageImpl<>(List.of(courseWithCapacity));
+		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(coursePage);
+
+		// when
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+
+		// then
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).title()).isEqualTo("정원 있는 강의");
+	}
+
+	@Test
+	@DisplayName("결과가 없으면 빈 페이지 반환")
+	void findAllCourses_결과없으면_빈페이지_반환() {
+		// given
+		FindCoursesReqDto reqDto = new FindCoursesReqDto();
+		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(Page.empty());
+
+		// when
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+
+		// then
+		assertThat(result.isEmpty()).isTrue();
 	}
 
 	private User defaultCreator() {

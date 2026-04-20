@@ -4,12 +4,15 @@ import java.time.LocalDateTime;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.converter.CourseConverter;
+import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
+import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -70,6 +73,11 @@ public class CourseFacadeService {
 		//TODO 현재 신청 인원 정보 포함 호출 로직 작성 예정
 		UserInfoDto creatorInfo = UserConverter.toUserInfo(course.getCreator());
 		return CourseConverter.toCourseInfoDto(course, creatorInfo);
+	}
+
+	public Page<CourseCardInfo> findAllCourses(final FindCoursesReqDto findCoursesReqDto) {
+		return courseQueryService.findAllWithFilters(findCoursesReqDto)
+			.map(CourseConverter::toCourseCardInfo);
 	}
 
 	private void validateRole(final User user) {

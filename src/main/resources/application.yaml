@@ -1,3 +1,11 @@
+server:
+  tomcat:
+    accept-count: 1024
+    max-connections: 8192
+    threads:
+      min-spare: 100
+      max: 200
+
 spring:
   application:
     name: Course-Registration-System

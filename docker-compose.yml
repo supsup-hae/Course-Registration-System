@@ -49,7 +49,6 @@ services:
     volumes:
       - redis_data:/data
       - ./config/redis.conf:/usr/local/etc/redis/redis.conf
-    # t3.xlarge 기반 Redis 튜닝: maxmemory 1GB, allkeys-lru 정책
     command: >
       redis-server /usr/local/etc/redis/redis.conf
       --requirepass ${REDIS_PASSWORD}
