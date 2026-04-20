@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import com.liveklass.domain.course.enums.CourseStatus;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public class FindCoursesReqDto {
 
 	@Schema(description = "페이지 크기", defaultValue = "10", example = "10")
 	@Min(1)
+	@Max(100)
 	private int size = 10;
 
 	@Schema(description = "강의 상태 필터링 (DRAFT: 초안, OPEN: 모집 중, CLOSED: 모집 마감)",
