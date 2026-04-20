@@ -67,6 +67,7 @@ END
 $$;
 
 CREATE INDEX IF NOT EXISTS IX_COURSES_CREATOR ON courses (creator_id);
+CREATE INDEX IF NOT EXISTS IX_COURSES_PRICE ON courses (price);
 
 -- enrollments
 CREATE TABLE IF NOT EXISTS enrollments (

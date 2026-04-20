@@ -30,7 +30,8 @@ import lombok.NoArgsConstructor;
 @Table(
 	name = "courses",
 	indexes = {
-		@Index(name = "IX_COURSES_CREATOR", columnList = "creator_id")
+		@Index(name = "IX_COURSES_CREATOR", columnList = "creator_id"),
+		@Index(name = "IX_COURSES_PRICE", columnList = "price")
 	}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
