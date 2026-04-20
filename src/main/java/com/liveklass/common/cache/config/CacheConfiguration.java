@@ -32,15 +32,14 @@ import com.liveklass.common.cache.enums.CacheType;
 import com.liveklass.common.cache.manager.CompositeCacheManager;
 import com.liveklass.common.cache.manager.LocalCacheManager;
 
+import lombok.RequiredArgsConstructor;
+
 @Configuration
 @EnableCaching
+@RequiredArgsConstructor
 public class CacheConfiguration {
 
 	private final RedisConnectionFactory redisConnectionFactory;
-
-	public CacheConfiguration(RedisConnectionFactory redisConnectionFactory) {
-		this.redisConnectionFactory = redisConnectionFactory;
-	}
 
 	@Bean
 	public LocalCacheManager localCacheManager() {
@@ -65,10 +64,14 @@ public class CacheConfiguration {
 	@Bean
 	public RedisSerializer<Object> redisSerializer() {
 		ObjectMapper objectMapper = JsonMapper.builder()
-			.addModule(new JavaTimeModule()) // KotlinModule 등은 자바 환경이므로 생략하였습니다
+			.addModule(new JavaTimeModule())
 			.activateDefaultTyping(
-				BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(),
-				ObjectMapper.DefaultTyping.EVERYTHING
+				BasicPolymorphicTypeValidator.builder()
+					.allowIfSubType("com.liveklass.")
+					.allowIfSubType("java.util.")
+					.allowIfSubType("java.time.")
+					.build(),
+				ObjectMapper.DefaultTyping.NON_FINAL
 			)
 			.configure(MapperFeature.USE_GETTERS_AS_SETTERS, false)
 			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -77,7 +80,7 @@ public class CacheConfiguration {
 		return new GenericJackson2JsonRedisSerializer(objectMapper);
 	}
 
-	@Bean
+	@Bean("redisCacheManager")
 	public CacheManager redisCacheManager(RedisSerializer<Object> redisSerializer) {
 		Map<String, RedisCacheConfiguration> redisCacheConfigurationMap = Arrays.stream(CacheGroup.values())
 			.filter(it -> it.getCacheType() == CacheType.GLOBAL || it.getCacheType() == CacheType.COMPOSITE)
