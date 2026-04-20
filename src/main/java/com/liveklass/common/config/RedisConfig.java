@@ -7,6 +7,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -37,9 +38,8 @@ public class RedisConfig {
 	}
 
 	@Bean
-	public RedisTemplate<String, String> stringRedisTemplate() {
-		return createGzipJsonRedisTemplate(redisConnectionFactory(), objectMapper, new TypeReference<>() {
-		});
+	public StringRedisTemplate stringRedisTemplate() {
+		return new StringRedisTemplate(redisConnectionFactory());
 	}
 
 	@Bean
