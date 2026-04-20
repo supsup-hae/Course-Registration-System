@@ -1,9 +1,11 @@
 package com.liveklass.domain.course.converter;
 
+import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
 import com.liveklass.domain.course.dto.response.UpdateCourseStatusResDto;
 import com.liveklass.domain.course.entity.Course;
+import com.liveklass.domain.user.converter.UserConverter;
 import com.liveklass.domain.user.dto.common.UserInfoDto;
 
 import lombok.experimental.UtilityClass;
@@ -24,6 +26,16 @@ public class CourseConverter {
 			.status(course.getStatus())
 			.startDate(course.getStartDate())
 			.endDate(course.getEndDate())
+			.build();
+	}
+
+	public CourseCardInfo toCourseCardInfo(final Course course) {
+		return CourseCardInfo.builder()
+			.courseId(course.getCourseId())
+			.title(course.getTitle())
+			.price(course.getPrice())
+			.status(course.getStatus())
+			.creator(UserConverter.toUserCardInfo(course.getCreator()))
 			.build();
 	}
 
