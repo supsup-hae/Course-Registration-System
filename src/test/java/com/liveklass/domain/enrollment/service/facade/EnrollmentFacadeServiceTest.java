@@ -285,7 +285,7 @@ class EnrollmentFacadeServiceTest {
 		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
 		willAnswer(_ -> {
 			enrollment.cancelByUser();
-		 return null;
+			return null;
 		}).given(enrollmentCommandService).cancel(enrollment);
 
 		// when
