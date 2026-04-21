@@ -17,4 +17,6 @@ public interface EnrollmentQueryService {
 	Enrollment findWithCourseAndStudentByIdForUpdate(Long enrollmentId);
 
 	Page<Enrollment> findByStudentId(Long studentId, EnrollmentStatus status, Pageable pageable);
+
+	Page<Enrollment> findByCourseId(Long courseId, EnrollmentStatus status, Pageable pageable);
 }

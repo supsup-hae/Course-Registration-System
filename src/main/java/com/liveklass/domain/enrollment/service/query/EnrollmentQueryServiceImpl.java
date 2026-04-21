@@ -68,4 +68,16 @@ public class EnrollmentQueryServiceImpl implements EnrollmentQueryService {
 			studentId, status, pageable.getPageNumber(), pageable.getPageSize(), enrollments.getNumberOfElements());
 		return enrollments;
 	}
+
+	@Override
+	public Page<Enrollment> findByCourseId(
+		final Long courseId,
+		final EnrollmentStatus status,
+		final Pageable pageable
+	) {
+		Page<Enrollment> enrollments = enrollmentRepository.findByCourseId(courseId, status, pageable);
+		log.info("[Enrollment] 강의별 수강생 목록 조회 : courseId = {}, status = {}, page = {}, size = {}, fetchCount = {}",
+			courseId, status, pageable.getPageNumber(), pageable.getPageSize(), enrollments.getNumberOfElements());
+		return enrollments;
+	}
 }

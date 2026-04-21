@@ -93,4 +93,23 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 		@Param("status") EnrollmentStatus status,
 		Pageable pageable
 	);
+
+	@Query(
+		value = """
+			SELECT e FROM Enrollment e
+			JOIN FETCH e.student s
+			WHERE e.course.courseId = :courseId
+			AND (:status IS NULL OR e.status = :status)
+			""",
+		countQuery = """
+			SELECT COUNT(e) FROM Enrollment e
+			WHERE e.course.courseId = :courseId
+			AND (:status IS NULL OR e.status = :status)
+			"""
+	)
+	Page<Enrollment> findByCourseId(
+		@Param("courseId") Long courseId,
+		@Param("status") EnrollmentStatus status,
+		Pageable pageable
+	);
 }
