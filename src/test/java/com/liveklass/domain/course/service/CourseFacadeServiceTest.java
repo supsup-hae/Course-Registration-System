@@ -21,6 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import com.liveklass.common.error.ErrorCode;
+import com.liveklass.domain.course.converter.CourseConverter;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
 
@@ -31,10 +32,13 @@ import com.liveklass.domain.course.dto.response.UpdateCourseStatusResDto;
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
+import com.liveklass.domain.course.service.cache.CourseDetailCacheService;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
 import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
+import com.liveklass.domain.user.converter.UserConverter;
+import com.liveklass.domain.user.dto.common.UserInfoDto;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
 import com.liveklass.domain.user.exception.UserException;
@@ -54,6 +58,9 @@ class CourseFacadeServiceTest {
 
 	@Mock
 	private EnrollmentQueryService enrollmentQueryService;
+
+	@Mock
+	private CourseDetailCacheService courseDetailCacheService;
 
 	@InjectMocks
 	private CourseFacadeService courseFacadeService;
@@ -164,6 +171,7 @@ class CourseFacadeServiceTest {
 
 		// when
 		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
+		courseDetailCacheService.evict(courseId);
 
 		// then
 		assertThat(result.status()).isEqualTo(CourseStatus.OPEN);
@@ -239,6 +247,7 @@ class CourseFacadeServiceTest {
 
 		// when
 		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
+		courseDetailCacheService.evict(courseId);
 
 		// then
 		assertThat(result.status()).isEqualTo(CourseStatus.OPEN);
@@ -257,6 +266,7 @@ class CourseFacadeServiceTest {
 
 		UpdateCourseStatusReqDto reqDto = new UpdateCourseStatusReqDto(CourseStatus.CLOSED, null, null);
 		given(courseQueryService.findById(courseId)).willReturn(openCourse);
+		courseDetailCacheService.evict(courseId);
 
 		// when
 		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
@@ -270,7 +280,9 @@ class CourseFacadeServiceTest {
 	void findCourseDetail_강의가_존재하면_CourseInfoDto_반환() {
 		// given
 		Long courseId = 1L;
-		given(courseQueryService.findByIdWithCreator(courseId)).willReturn(draftCourse);
+		UserInfoDto creatorInfo = UserConverter.toUserInfo(creator);
+		CourseInfoDto mockDto = CourseConverter.toCourseInfoDto(draftCourse, creatorInfo);
+		given(courseDetailCacheService.load(courseId)).willReturn(mockDto);
 		given(enrollmentQueryService.countActive(courseId)).willReturn(0L);
 
 		// when
@@ -289,7 +301,7 @@ class CourseFacadeServiceTest {
 	void findCourseDetail_존재하지_않는_강의면_NOT_FOUND_예외() {
 		// given
 		Long courseId = 999L;
-		given(courseQueryService.findByIdWithCreator(courseId))
+		given(courseDetailCacheService.load(courseId))
 			.willThrow(new CourseException(ErrorCode.NOT_FOUND));
 
 		// when & then
