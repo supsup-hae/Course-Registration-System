@@ -272,6 +272,23 @@ class EnrollmentFacadeServiceTest {
 	}
 
 	@Test
+	@DisplayName("수강신청 상태 7일 경과후 취소 시 ENROLLMENT_CANCEL_PERIOD_EXPIRED 예외 발생")
+	void cancelEnrollmentThrowsCancelPeriodExpiredWhenOver7Days() {
+		// given
+		Enrollment enrollment = spy(Enrollment.pending(student, course, LocalDateTime.now()));
+		enrollment.confirm();
+		given(enrollment.getConfirmedAt()).willReturn(LocalDateTime.now().minusDays(7).minusSeconds(1));
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+
+		// when & then
+		assertThatThrownBy(() -> facade.cancelEnrollment(1L, 999L))
+			.isInstanceOf(EnrollmentException.class)
+			.satisfies(ex -> assertThat(((EnrollmentException) ex).getErrorCode())
+				.isEqualTo(ErrorCode.ENROLLMENT_CANCEL_PERIOD_EXPIRED));
+		verify(enrollmentCommandService, never()).cancel(any());
+	}
+
+	@Test
 	@DisplayName("무제한 정원 강의 취소 시 Redis DECR 미호출")
 	void cancelEnrollmentSkipsRedisDecrWhenUnlimitedCapacity() {
 		// given
