@@ -23,7 +23,7 @@ public record EnrollmentResDto(
 	@Schema(description = "수강신청 상태 (초기 PENDING)", example = "PENDING")
 	EnrollmentStatus status,
 
-	@Schema(description = "PENDING 상태 만료 일시 (기본 30분)", example = "2026-05-01T10:30:00")
+	@Schema(description = "PENDING 상태 만료 일시 (기본 15분)", example = "2026-05-01T10:30:00")
 	LocalDateTime expiresAt
 ) {
 }
