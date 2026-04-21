@@ -27,7 +27,7 @@ public class EnrollmentExpiryScheduler {
 	private final EnrollmentRepository enrollmentRepository;
 	private final EnrollmentSlotCounter redisCounter;
 
-	@Scheduled(fixedDelay = 60_000L)
+	@Scheduled(cron = "0 * * * * *")
 	@Transactional
 	public void sweep() {
 		List<Enrollment> expired = enrollmentRepository.findExpiredPending(
