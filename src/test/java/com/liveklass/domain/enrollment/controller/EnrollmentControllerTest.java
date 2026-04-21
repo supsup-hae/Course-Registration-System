@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.liveklass.common.config.SecurityConfig;
 import com.liveklass.common.constants.AuthConstants;
+import com.liveklass.common.error.ErrorCode;
+import com.liveklass.domain.enrollment.EnrollmentException;
 import com.liveklass.domain.enrollment.dto.request.CreateEnrollmentReqDto;
 import com.liveklass.domain.enrollment.dto.response.EnrollmentResDto;
 import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
@@ -92,6 +94,34 @@ class EnrollmentControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("{\"courseId\":null}"))
 			.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	@DisplayName("정원 초과 시 409 반환")
+	void capacityFullReturns409() throws Exception {
+		given(enrollmentFacadeService.createPending(1L, 10L))
+			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_CAPACITY_FULL));
+
+		mockMvc.perform(post("/api/v1/enrollments")
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(new CreateEnrollmentReqDto(10L))))
+			.andExpect(status().isConflict());
+	}
+
+	@Test
+	@DisplayName("중복 신청 시 409 반환")
+	void duplicateEnrollmentReturns409() throws Exception {
+		given(enrollmentFacadeService.createPending(1L, 10L))
+			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_DUPLICATE));
+
+		mockMvc.perform(post("/api/v1/enrollments")
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(new CreateEnrollmentReqDto(10L))))
+			.andExpect(status().isConflict());
 	}
 
 	private EnrollmentResDto pendingResDto() {
