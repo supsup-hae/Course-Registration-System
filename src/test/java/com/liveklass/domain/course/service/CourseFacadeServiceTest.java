@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,6 +20,7 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
 
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.converter.CourseConverter;
@@ -36,6 +38,9 @@ import com.liveklass.domain.course.service.cache.CourseDetailCacheService;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
+import com.liveklass.domain.enrollment.dto.response.CourseEnrollmentInfo;
+import com.liveklass.domain.enrollment.entity.Enrollment;
+import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
 import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
 import com.liveklass.domain.user.converter.UserConverter;
 import com.liveklass.domain.user.dto.common.UserInfoDto;
@@ -277,7 +282,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("강의가 존재하면 CourseInfoDto 반환")
-	void findCourseDetail_강의가_존재하면_CourseInfoDto_반환() {
+	void findCourseDetailReturnsDtoWhenCourseExists() {
 		// given
 		Long courseId = 1L;
 		UserInfoDto creatorInfo = UserConverter.toUserInfo(creator);
@@ -298,7 +303,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("존재하지 않는 강의 조회 시 NOT_FOUND 예외 발생")
-	void findCourseDetail_존재하지_않는_강의면_NOT_FOUND_예외() {
+	void findCourseDetailThrowsNotFoundWhenCourseNotExists() {
 		// given
 		Long courseId = 999L;
 		given(courseDetailCacheService.load(courseId))
@@ -313,7 +318,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("필터 없이 목록 조회 시 전체 강의 카드 반환")
-	void findAllCourses_필터없으면_전체_반환() {
+	void findAllCoursesReturnsAllWithoutFilter() {
 		// given
 		Page<Course> coursePage = new PageImpl<>(List.of(draftCourse));
 		given(courseQueryService.findAllWithFilters(0, 10, null, null, null, null)).willReturn(coursePage);
@@ -329,7 +334,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("status 필터로 OPEN 강의만 조회")
-	void findAllCourses_status_필터_적용() {
+	void findAllCoursesAppliesStatusFilter() {
 		// given
 		given(courseQueryService.findAllWithFilters(0, 10, CourseStatus.OPEN, null, null, null)).willReturn(
 			Page.empty());
@@ -343,7 +348,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("가격 범위 필터 적용 시 해당 범위 강의만 반환")
-	void findAllCourses_가격범위_필터_적용() {
+	void findAllCoursesAppliesPriceRangeFilter() {
 		// given
 		BigDecimal minPrice = BigDecimal.valueOf(5000);
 		BigDecimal maxPrice = BigDecimal.valueOf(20000);
@@ -359,7 +364,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("hasCapacity=true 필터 시 정원 있는 강의만 반환")
-	void findAllCourses_hasCapacity_필터_적용() {
+	void findAllCoursesAppliesHasCapacityFilter() {
 		// given
 		Course courseWithCapacity = Course.createDraft(creator, new RegisterCourseReqDto(
 			"정원 있는 강의", "설명", BigDecimal.valueOf(10000), 20, null, null
@@ -377,7 +382,7 @@ class CourseFacadeServiceTest {
 
 	@Test
 	@DisplayName("결과가 없으면 빈 페이지 반환")
-	void findAllCourses_결과없으면_빈페이지_반환() {
+	void findAllCoursesReturnsEmptyPageWhenNoResults() {
 		// given
 		given(courseQueryService.findAllWithFilters(0, 10, null, null, null, null)).willReturn(Page.empty());
 
@@ -386,6 +391,90 @@ class CourseFacadeServiceTest {
 
 		// then
 		assertThat(result.isEmpty()).isTrue();
+	}
+
+	@Nested
+	@DisplayName("강의별 수강생 목록 조회")
+	class FindCourseEnrollments {
+
+		@Test
+		@DisplayName("크리에이터가 자신의 강의 수강생 목록을 정상 조회")
+		void ownerCanRetrieveEnrollments() {
+			// given
+			Long creatorId = 1L;
+			Long courseId = 1L;
+			User student = User.create("수강생", "student@test.com", "password", Role.STUDENT);
+			Enrollment enrollment = Enrollment.pending(student, draftCourse, LocalDateTime.now());
+			Page<Enrollment> enrollmentPage = new PageImpl<>(List.of(enrollment));
+
+			given(courseQueryService.findById(courseId)).willReturn(draftCourse);
+			given(enrollmentQueryService.findByCourseId(eq(courseId), any(), any()))
+				.willReturn(enrollmentPage);
+
+			// when
+			Page<CourseEnrollmentInfo> result = courseFacadeService.findCourseEnrollments(
+				creatorId, courseId, 0, 10, null, Sort.Direction.DESC
+			);
+
+			// then
+			assertThat(result.getTotalElements()).isEqualTo(1);
+			assertThat(result.getContent().get(0).status()).isEqualTo(EnrollmentStatus.PENDING);
+			assertThat(result.getContent().get(0).student().name()).isEqualTo("수강생");
+		}
+
+		@Test
+		@DisplayName("소유자가 아닌 사용자가 조회 시 ACCESS_DENIED 예외 발생")
+		void nonOwnerThrowsAccessDenied() {
+			// given
+			Long otherUserId = 999L;
+			Long courseId = 1L;
+			given(courseQueryService.findById(courseId)).willReturn(draftCourse);
+
+			// when & then
+			assertThatThrownBy(() -> courseFacadeService.findCourseEnrollments(
+				otherUserId, courseId, 0, 10, null, Sort.Direction.DESC
+			))
+				.isInstanceOf(CourseException.class)
+				.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
+					.isEqualTo(ErrorCode.ACCESS_DENIED));
+		}
+
+		@Test
+		@DisplayName("존재하지 않는 강의 조회 시 NOT_FOUND 예외 발생")
+		void nonExistentCourseThrowsNotFound() {
+			// given
+			Long creatorId = 1L;
+			Long courseId = 999L;
+			given(courseQueryService.findById(courseId))
+				.willThrow(new CourseException(ErrorCode.NOT_FOUND));
+
+			// when & then
+			assertThatThrownBy(() -> courseFacadeService.findCourseEnrollments(
+				creatorId, courseId, 0, 10, null, Sort.Direction.DESC
+			))
+				.isInstanceOf(CourseException.class)
+				.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
+					.isEqualTo(ErrorCode.NOT_FOUND));
+		}
+
+		@Test
+		@DisplayName("수강생이 없으면 빈 페이지 반환")
+		void emptyEnrollmentsReturnsEmptyPage() {
+			// given
+			Long creatorId = 1L;
+			Long courseId = 1L;
+			given(courseQueryService.findById(courseId)).willReturn(draftCourse);
+			given(enrollmentQueryService.findByCourseId(eq(courseId), any(), any()))
+				.willReturn(Page.empty());
+
+			// when
+			Page<CourseEnrollmentInfo> result = courseFacadeService.findCourseEnrollments(
+				creatorId, courseId, 0, 10, null, Sort.Direction.DESC
+			);
+
+			// then
+			assertThat(result.isEmpty()).isTrue();
+		}
 	}
 
 	private User defaultCreator() {
