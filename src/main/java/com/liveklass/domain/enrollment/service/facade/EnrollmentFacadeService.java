@@ -49,7 +49,12 @@ public class EnrollmentFacadeService {
 		} catch (RuntimeException ex) {
 			if (acquired) {
 				log.warn("[Enrollment] PENDING 저장 실패 Redis 카운터 감소 : courseId = {}", course.getCourseId(), ex);
-				redisCounter.decrement(course.getCourseId());
+				try {
+					redisCounter.decrement(course.getCourseId());
+				} catch (Exception decrEx) {
+					log.error("[Enrollment] Redis 카운터 감소 실패, 스케줄러 보정 필요 : courseId = {}", course.getCourseId(), decrEx);
+					ex.addSuppressed(decrEx);
+				}
 			}
 			throw ex;
 		}
