@@ -1,11 +1,14 @@
 package com.liveklass.domain.course.controller.query;
 
+import java.math.BigDecimal;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.liveklass.common.response.BaseResponse;
@@ -13,16 +16,20 @@ import com.liveklass.common.response.PageResponse;
 import com.liveklass.common.util.ResponseUtils;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
-import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
+import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 
 @Tag(name = "강의", description = "강의 관련 API")
+@Validated
 @RestController
 @RequestMapping("/api/v1/courses")
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
@@ -42,9 +49,27 @@ public class CourseQueryController {
 	@Operation(summary = "강의 목록 조회", description = "전체 강의 목록을 조회합니다.")
 	@GetMapping
 	public ResponseEntity<PageResponse<CourseCardInfo>> findAllCourses(
-		@Valid @ModelAttribute final FindCoursesReqDto findCoursesReqDto
+		@Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+		@RequestParam(defaultValue = "0") @Min(0) final int page,
+
+		@Parameter(description = "페이지 크기", example = "10")
+		@RequestParam(defaultValue = "10") @Min(1) @Max(100) final int size,
+
+		@Parameter(description = "강의 상태 필터링 (DRAFT, OPEN, CLOSED)", example = "OPEN")
+		@RequestParam(required = false) final CourseStatus status,
+
+		@Parameter(description = "최소 수강료 (0 이상)", example = "10000")
+		@RequestParam(required = false) @PositiveOrZero final BigDecimal minPrice,
+
+		@Parameter(description = "최대 수강료 (0 이상)", example = "50000")
+		@RequestParam(required = false) @PositiveOrZero final BigDecimal maxPrice,
+
+		@Parameter(description = "정원 제한 여부 필터링", example = "true")
+		@RequestParam(required = false) final Boolean hasCapacity
 	) {
-		Page<CourseCardInfo> response = courseFacadeService.findAllCourses(findCoursesReqDto);
+		Page<CourseCardInfo> response = courseFacadeService.findAllCourses(
+			page, size, status, minPrice, maxPrice, hasCapacity
+		);
 		return ResponseUtils.page(response);
 	}
 

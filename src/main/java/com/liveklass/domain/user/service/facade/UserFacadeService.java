@@ -1,11 +1,11 @@
 package com.liveklass.domain.user.service.facade;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.liveklass.common.util.PageUtils;
 import com.liveklass.domain.enrollment.converter.EnrollmentConverter;
 import com.liveklass.domain.enrollment.dto.common.EnrollmentCardInfo;
 import com.liveklass.domain.enrollment.entity.Enrollment;
@@ -31,14 +31,8 @@ public class UserFacadeService {
 		final EnrollmentStatus status,
 		final Sort.Direction sortOrder
 	) {
-		PageRequest pageRequest = PageRequest.of(
-			page,
-			size,
-			Sort.by(sortOrder, "createdAt")
-		);
-
 		Page<Enrollment> enrollments = enrollmentQueryService.findByStudentId(
-			studentId, status, pageRequest
+			studentId, status, PageUtils.of(page, size, sortOrder, "createdAt")
 		);
 		return enrollments.map(EnrollmentConverter::toEnrollmentCardInfo);
 	}

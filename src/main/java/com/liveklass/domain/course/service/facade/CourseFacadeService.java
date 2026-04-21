@@ -1,5 +1,6 @@
 package com.liveklass.domain.course.service.facade;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.springframework.cache.annotation.CacheEvict;
@@ -12,7 +13,6 @@ import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.converter.CourseConverter;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
-import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -75,8 +75,15 @@ public class CourseFacadeService {
 		return CourseConverter.toCourseInfoDto(course, creatorInfo);
 	}
 
-	public Page<CourseCardInfo> findAllCourses(final FindCoursesReqDto findCoursesReqDto) {
-		return courseQueryService.findAllWithFilters(findCoursesReqDto)
+	public Page<CourseCardInfo> findAllCourses(
+		final int page,
+		final int size,
+		final CourseStatus status,
+		final BigDecimal minPrice,
+		final BigDecimal maxPrice,
+		final Boolean hasCapacity
+	) {
+		return courseQueryService.findAllWithFilters(page, size, status, minPrice, maxPrice, hasCapacity)
 			.map(CourseConverter::toCourseCardInfo);
 	}
 

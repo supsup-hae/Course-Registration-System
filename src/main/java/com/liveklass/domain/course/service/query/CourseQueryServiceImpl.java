@@ -1,14 +1,14 @@
 package com.liveklass.domain.course.service.query;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.common.error.ErrorCode;
-import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
+import com.liveklass.common.util.PageUtils;
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
@@ -52,18 +52,23 @@ public class CourseQueryServiceImpl implements CourseQueryService {
 	}
 
 	@Override
-	public Page<Course> findAllWithFilters(final FindCoursesReqDto reqDto) {
+	public Page<Course> findAllWithFilters(
+		final int page,
+		final int size,
+		final CourseStatus status,
+		final BigDecimal minPrice,
+		final BigDecimal maxPrice,
+		final Boolean hasCapacity
+	) {
 		log.info("[Course] 강의 목록 필터 조회 : status={}, minPrice={}, maxPrice={}, hasCapacity={}, page={}, size={}",
-			reqDto.getStatus(), reqDto.getMinPrice(), reqDto.getMaxPrice(),
-			reqDto.getHasCapacity(), reqDto.getPage(), reqDto.getSize());
+			status, minPrice, maxPrice, hasCapacity, page, size);
 
-		PageRequest pageable = PageRequest.of(reqDto.getPage(), reqDto.getSize());
 		return courseRepository.findAllWithFilters(
-			reqDto.getStatus(),
-			reqDto.getMinPrice(),
-			reqDto.getMaxPrice(),
-			reqDto.getHasCapacity(),
-			pageable
+			status,
+			minPrice,
+			maxPrice,
+			hasCapacity,
+			PageUtils.of(page, size)
 		);
 	}
 

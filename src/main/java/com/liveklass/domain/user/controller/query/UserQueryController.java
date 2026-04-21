@@ -40,12 +40,16 @@ public class UserQueryController {
 	@GetMapping("/me/enrollments")
 	public ResponseEntity<PageResponse<EnrollmentCardInfo>> findMyEnrollments(
 		@AuthenticationPrincipal final UserPrincipal principal,
+
 		@Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
 		@RequestParam(defaultValue = "0") @Min(0) final int page,
+
 		@Parameter(description = "페이지 크기", example = "10")
 		@RequestParam(defaultValue = "10") @Min(1) @Max(100) final int size,
+
 		@Parameter(description = "수강신청 상태 필터 (PENDING, CONFIRMED, CANCELLED 등)")
 		@RequestParam(required = false) final EnrollmentStatus status,
+
 		@Parameter(description = "정렬 순서 (ASC, DESC)", example = "DESC")
 		@RequestParam(defaultValue = "DESC") final Sort.Direction sortOrder
 	) {
