@@ -54,4 +54,15 @@ public class EnrollmentCommandController {
 		return ResponseUtils.ok(response);
 	}
 
+	@Operation(summary = "수강신청 취소", description = "수강신청을 취소합니다. (학생 변심 또는 환불 등)")
+	@PatchMapping("/{id}/cancel")
+	@PreAuthorize("hasRole('STUDENT')")
+	public ResponseEntity<BaseResponse<EnrollmentResDto>> cancelEnrollment(
+		@AuthenticationPrincipal final UserPrincipal principal,
+		@PathVariable("id") final Long enrollmentId
+	) {
+		EnrollmentResDto response = enrollmentFacadeService.cancelEnrollment(principal.userId(), enrollmentId);
+		return ResponseUtils.ok(response);
+	}
+
 }
