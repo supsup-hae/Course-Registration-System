@@ -53,4 +53,20 @@ public class CourseConverter {
 			.createdAt(course.getCreatedAt())
 			.build();
 	}
+
+	public CourseInfoDto withEnrollmentCount(final CourseInfoDto dto, final long count) {
+		return CourseInfoDto.builder()
+			.courseId(dto.courseId())
+			.creator(dto.creator())
+			.title(dto.title())
+			.description(dto.description())
+			.price(dto.price())
+			.capacity(dto.capacity())
+			.status(dto.status())
+			.startDate(dto.startDate())
+			.endDate(dto.endDate())
+			.createdAt(dto.createdAt())
+			.currentEnrollmentCount(count)
+			.build();
+	}
 }

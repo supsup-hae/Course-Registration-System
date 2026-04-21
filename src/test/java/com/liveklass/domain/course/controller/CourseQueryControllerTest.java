@@ -25,7 +25,6 @@ import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.controller.query.CourseQueryController;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
-import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
@@ -74,7 +73,7 @@ class CourseQueryControllerTest {
 	void getCourses_returns200_whenValidRequest() throws Exception {
 		// given
 		Page<CourseCardInfo> page = new PageImpl<>(List.of(courseCardInfo()));
-		given(courseFacadeService.findAllCourses(any(FindCoursesReqDto.class))).willReturn(page);
+		given(courseFacadeService.findAllCourses(anyInt(), anyInt(), any(), any(), any(), any())).willReturn(page);
 
 		// when & then
 		mockMvc.perform(get("/api/v1/courses")
@@ -90,7 +89,7 @@ class CourseQueryControllerTest {
 	void getCourses_returns200_withStatusFilter() throws Exception {
 		// given
 		Page<CourseCardInfo> page = new PageImpl<>(List.of(courseCardInfo()));
-		given(courseFacadeService.findAllCourses(any(FindCoursesReqDto.class))).willReturn(page);
+		given(courseFacadeService.findAllCourses(anyInt(), anyInt(), any(), any(), any(), any())).willReturn(page);
 
 		// when & then
 		mockMvc.perform(get("/api/v1/courses")
@@ -104,7 +103,8 @@ class CourseQueryControllerTest {
 	@DisplayName("가격 범위 필터로 목록 조회 시 200 반환")
 	void getCourses_returns200_withPriceFilter() throws Exception {
 		// given
-		given(courseFacadeService.findAllCourses(any(FindCoursesReqDto.class))).willReturn(Page.empty());
+		given(courseFacadeService.findAllCourses(anyInt(), anyInt(), any(), any(), any(), any())).willReturn(
+			Page.empty());
 
 		// when & then
 		mockMvc.perform(get("/api/v1/courses")
@@ -114,9 +114,8 @@ class CourseQueryControllerTest {
 				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
 			.andExpect(status().isOk());
 
-		verify(courseFacadeService).findAllCourses(argThat(req ->
-			req.getMinPrice().compareTo(BigDecimal.valueOf(5000)) == 0 &&
-			req.getMaxPrice().compareTo(BigDecimal.valueOf(50000)) == 0));
+		verify(courseFacadeService).findAllCourses(
+			0, 10, null, BigDecimal.valueOf(5000), BigDecimal.valueOf(50000), null);
 	}
 
 	@Test
@@ -134,7 +133,8 @@ class CourseQueryControllerTest {
 	@DisplayName("인증 없이 목록 조회 API 호출 시 200 반환")
 	void getCourses_returns200_whenUnauthenticated() throws Exception {
 		// given
-		given(courseFacadeService.findAllCourses(any(FindCoursesReqDto.class))).willReturn(Page.empty());
+		given(courseFacadeService.findAllCourses(anyInt(), anyInt(), any(), any(), any(), any())).willReturn(
+			Page.empty());
 
 		// when & then
 		mockMvc.perform(get("/api/v1/courses"))

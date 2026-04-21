@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -48,13 +50,47 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 		@Param("threshold") LocalDateTime threshold
 	);
 
-	@Query("SELECT e FROM Enrollment e JOIN FETCH e.student WHERE e.enrollmentId = :enrollmentId")
+	@Query("""
+		SELECT e FROM Enrollment e
+		JOIN FETCH e.student
+		WHERE e.enrollmentId = :enrollmentId
+		""")
 	Optional<Enrollment> findWithStudentById(@Param("enrollmentId") Long enrollmentId);
 
-	@Query("select e FROM Enrollment e JOIN FETCH e.course JOIN FETCH e.student WHERE e.enrollmentId = :enrollmentId")
+	@Query("""
+		SELECT e FROM Enrollment e
+		JOIN FETCH e.course
+		JOIN FETCH e.student
+		WHERE e.enrollmentId = :enrollmentId
+		""")
 	Optional<Enrollment> findWithCourseAndStudentById(@Param("enrollmentId") Long enrollmentId);
 
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	@Query("select e FROM Enrollment e JOIN FETCH e.course JOIN FETCH e.student WHERE e.enrollmentId = :enrollmentId")
+	@Query("""
+		SELECT e FROM Enrollment e
+		JOIN FETCH e.course
+		JOIN FETCH e.student
+		WHERE e.enrollmentId = :enrollmentId
+		""")
 	Optional<Enrollment> findWithCourseAndStudentByIdForUpdate(@Param("enrollmentId") Long enrollmentId);
+
+	@Query(
+		value = """
+			SELECT e FROM Enrollment e
+			JOIN FETCH e.course c
+			JOIN FETCH c.creator
+			WHERE e.student.userId = :studentId
+			AND (:status IS NULL OR e.status = :status)
+			""",
+		countQuery = """
+			SELECT COUNT(e) FROM Enrollment e
+			WHERE e.student.userId = :studentId
+			AND (:status IS NULL OR e.status = :status)
+			"""
+	)
+	Page<Enrollment> findByStudentId(
+		@Param("studentId") Long studentId,
+		@Param("status") EnrollmentStatus status,
+		Pageable pageable
+	);
 }

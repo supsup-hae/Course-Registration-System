@@ -1,11 +1,14 @@
 package com.liveklass.domain.enrollment.service.query;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.enrollment.EnrollmentException;
 import com.liveklass.domain.enrollment.entity.Enrollment;
+import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
 import com.liveklass.domain.enrollment.repository.EnrollmentRepository;
 
 import lombok.AccessLevel;
@@ -52,5 +55,17 @@ public class EnrollmentQueryServiceImpl implements EnrollmentQueryService {
 		log.info("[Enrollment] 수강신청 조회 (Course, Student 포함, FOR UPDATE) : enrollmentId = {}",
 			enrollment.getEnrollmentId());
 		return enrollment;
+	}
+
+	@Override
+	public Page<Enrollment> findByStudentId(
+		final Long studentId,
+		final EnrollmentStatus status,
+		final Pageable pageable
+	) {
+		Page<Enrollment> enrollments = enrollmentRepository.findByStudentId(studentId, status, pageable);
+		log.info("[Enrollment] 내 수강신청 목록 조회 : studentId = {}, status = {}, page = {}, size = {}, fetchCount = {}",
+			studentId, status, pageable.getPageNumber(), pageable.getPageSize(), enrollments.getNumberOfElements());
+		return enrollments;
 	}
 }

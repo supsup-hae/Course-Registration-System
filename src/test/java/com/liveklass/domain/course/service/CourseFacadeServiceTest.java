@@ -21,9 +21,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 
 import com.liveklass.common.error.ErrorCode;
+import com.liveklass.domain.course.converter.CourseConverter;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
-import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
+
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -31,9 +32,13 @@ import com.liveklass.domain.course.dto.response.UpdateCourseStatusResDto;
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
+import com.liveklass.domain.course.service.cache.CourseDetailCacheService;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
+import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
+import com.liveklass.domain.user.converter.UserConverter;
+import com.liveklass.domain.user.dto.common.UserInfoDto;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
 import com.liveklass.domain.user.exception.UserException;
@@ -50,6 +55,12 @@ class CourseFacadeServiceTest {
 
 	@Mock
 	private UserQueryService userQueryService;
+
+	@Mock
+	private EnrollmentQueryService enrollmentQueryService;
+
+	@Mock
+	private CourseDetailCacheService courseDetailCacheService;
 
 	@InjectMocks
 	private CourseFacadeService courseFacadeService;
@@ -160,6 +171,7 @@ class CourseFacadeServiceTest {
 
 		// when
 		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
+		courseDetailCacheService.evict(courseId);
 
 		// then
 		assertThat(result.status()).isEqualTo(CourseStatus.OPEN);
@@ -179,7 +191,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.OPEN_REQUIRES_START_DATE));
 	}
 
@@ -197,7 +209,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_COURSE_DATE_RANGE));
 	}
 
@@ -213,7 +225,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_COURSE_STATUS_TRANSITION));
 	}
 
@@ -235,6 +247,7 @@ class CourseFacadeServiceTest {
 
 		// when
 		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
+		courseDetailCacheService.evict(courseId);
 
 		// then
 		assertThat(result.status()).isEqualTo(CourseStatus.OPEN);
@@ -253,6 +266,7 @@ class CourseFacadeServiceTest {
 
 		UpdateCourseStatusReqDto reqDto = new UpdateCourseStatusReqDto(CourseStatus.CLOSED, null, null);
 		given(courseQueryService.findById(courseId)).willReturn(openCourse);
+		courseDetailCacheService.evict(courseId);
 
 		// when
 		UpdateCourseStatusResDto result = courseFacadeService.updateCourseStatus(userId, courseId, reqDto);
@@ -266,7 +280,10 @@ class CourseFacadeServiceTest {
 	void findCourseDetail_강의가_존재하면_CourseInfoDto_반환() {
 		// given
 		Long courseId = 1L;
-		given(courseQueryService.findByIdWithCreator(courseId)).willReturn(draftCourse);
+		UserInfoDto creatorInfo = UserConverter.toUserInfo(creator);
+		CourseInfoDto mockDto = CourseConverter.toCourseInfoDto(draftCourse, creatorInfo);
+		given(courseDetailCacheService.load(courseId)).willReturn(mockDto);
+		given(enrollmentQueryService.countActive(courseId)).willReturn(0L);
 
 		// when
 		CourseInfoDto result = courseFacadeService.findCourseDetail(courseId);
@@ -276,6 +293,7 @@ class CourseFacadeServiceTest {
 		assertThat(result.status()).isEqualTo(CourseStatus.DRAFT);
 		assertThat(result.creator().name()).isEqualTo(creator.getName());
 		assertThat(result.creator().email()).isEqualTo(creator.getEmail());
+		assertThat(result.currentEnrollmentCount()).isZero();
 	}
 
 	@Test
@@ -283,13 +301,13 @@ class CourseFacadeServiceTest {
 	void findCourseDetail_존재하지_않는_강의면_NOT_FOUND_예외() {
 		// given
 		Long courseId = 999L;
-		given(courseQueryService.findByIdWithCreator(courseId))
+		given(courseDetailCacheService.load(courseId))
 			.willThrow(new CourseException(ErrorCode.NOT_FOUND));
 
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.findCourseDetail(courseId))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.NOT_FOUND));
 	}
 
@@ -297,12 +315,11 @@ class CourseFacadeServiceTest {
 	@DisplayName("필터 없이 목록 조회 시 전체 강의 카드 반환")
 	void findAllCourses_필터없으면_전체_반환() {
 		// given
-		FindCoursesReqDto reqDto = new FindCoursesReqDto();
 		Page<Course> coursePage = new PageImpl<>(List.of(draftCourse));
-		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(coursePage);
+		given(courseQueryService.findAllWithFilters(0, 10, null, null, null, null)).willReturn(coursePage);
 
 		// when
-		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(0, 10, null, null, null, null);
 
 		// then
 		assertThat(result.getTotalElements()).isEqualTo(1);
@@ -314,12 +331,11 @@ class CourseFacadeServiceTest {
 	@DisplayName("status 필터로 OPEN 강의만 조회")
 	void findAllCourses_status_필터_적용() {
 		// given
-		FindCoursesReqDto reqDto = new FindCoursesReqDto();
-		reqDto.setStatus(CourseStatus.OPEN);
-		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(Page.empty());
+		given(courseQueryService.findAllWithFilters(0, 10, CourseStatus.OPEN, null, null, null)).willReturn(
+			Page.empty());
 
 		// when
-		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(0, 10, CourseStatus.OPEN, null, null, null);
 
 		// then
 		assertThat(result.getTotalElements()).isZero();
@@ -329,14 +345,13 @@ class CourseFacadeServiceTest {
 	@DisplayName("가격 범위 필터 적용 시 해당 범위 강의만 반환")
 	void findAllCourses_가격범위_필터_적용() {
 		// given
-		FindCoursesReqDto reqDto = new FindCoursesReqDto();
-		reqDto.setMinPrice(BigDecimal.valueOf(5000));
-		reqDto.setMaxPrice(BigDecimal.valueOf(20000));
+		BigDecimal minPrice = BigDecimal.valueOf(5000);
+		BigDecimal maxPrice = BigDecimal.valueOf(20000);
 		Page<Course> coursePage = new PageImpl<>(List.of(draftCourse));
-		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(coursePage);
+		given(courseQueryService.findAllWithFilters(0, 10, null, minPrice, maxPrice, null)).willReturn(coursePage);
 
 		// when
-		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(0, 10, null, minPrice, maxPrice, null);
 
 		// then
 		assertThat(result.getContent().get(0).price()).isEqualByComparingTo(BigDecimal.valueOf(10000));
@@ -346,16 +361,14 @@ class CourseFacadeServiceTest {
 	@DisplayName("hasCapacity=true 필터 시 정원 있는 강의만 반환")
 	void findAllCourses_hasCapacity_필터_적용() {
 		// given
-		FindCoursesReqDto reqDto = new FindCoursesReqDto();
-		reqDto.setHasCapacity(true);
 		Course courseWithCapacity = Course.createDraft(creator, new RegisterCourseReqDto(
 			"정원 있는 강의", "설명", BigDecimal.valueOf(10000), 20, null, null
 		));
 		Page<Course> coursePage = new PageImpl<>(List.of(courseWithCapacity));
-		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(coursePage);
+		given(courseQueryService.findAllWithFilters(0, 10, null, null, null, true)).willReturn(coursePage);
 
 		// when
-		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(0, 10, null, null, null, true);
 
 		// then
 		assertThat(result.getContent()).hasSize(1);
@@ -366,11 +379,10 @@ class CourseFacadeServiceTest {
 	@DisplayName("결과가 없으면 빈 페이지 반환")
 	void findAllCourses_결과없으면_빈페이지_반환() {
 		// given
-		FindCoursesReqDto reqDto = new FindCoursesReqDto();
-		given(courseQueryService.findAllWithFilters(reqDto)).willReturn(Page.empty());
+		given(courseQueryService.findAllWithFilters(0, 10, null, null, null, null)).willReturn(Page.empty());
 
 		// when
-		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(reqDto);
+		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(0, 10, null, null, null, null);
 
 		// then
 		assertThat(result.isEmpty()).isTrue();
