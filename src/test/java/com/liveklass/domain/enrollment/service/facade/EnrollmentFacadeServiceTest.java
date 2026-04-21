@@ -71,7 +71,7 @@ class EnrollmentFacadeServiceTest {
 		given(courseQueryService.findById(10L)).willReturn(course);
 		given(enrollmentQueryService.existsActive(1L, 10L)).willReturn(false);
 		given(redisCounter.tryIncrement(any(), eq(100))).willReturn(true);
-		given(enrollmentQueryService.countActiveForUpdate(any())).willReturn(50L);
+		given(enrollmentQueryService.countActive(any())).willReturn(50L);
 		Enrollment saved = Enrollment.pending(student, course, LocalDateTime.now());
 		given(enrollmentCommandService.savePending(student, course)).willReturn(saved);
 
@@ -109,7 +109,7 @@ class EnrollmentFacadeServiceTest {
 		given(courseQueryService.findById(10L)).willReturn(course);
 		given(enrollmentQueryService.existsActive(1L, 10L)).willReturn(false);
 		given(redisCounter.tryIncrement(any(), eq(100))).willReturn(true);
-		given(enrollmentQueryService.countActiveForUpdate(any())).willReturn(100L);
+		given(enrollmentQueryService.countActive(any())).willReturn(100L);
 
 		// when & then
 		assertThatThrownBy(() -> facade.createPending(1L, 10L))

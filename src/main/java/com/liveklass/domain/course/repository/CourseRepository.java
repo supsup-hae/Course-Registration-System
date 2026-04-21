@@ -11,10 +11,10 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import jakarta.persistence.LockModeType;
-
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
+
+import jakarta.persistence.LockModeType;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
 

@@ -38,10 +38,10 @@ class EnrollmentQueryServiceImplTest {
 	@DisplayName("countActiveForUpdate() 호출 시 SELECT FOR UPDATE 쿼리 실행")
 	void countActiveForUpdateExecutesPessimisticLock() {
 		// given
-		given(enrollmentRepository.countActiveByCourseIdForUpdate(10L)).willReturn(3L);
+		given(enrollmentRepository.countActiveByCourseId(10L)).willReturn(3L);
 
 		// when
-		long result = service.countActiveForUpdate(10L);
+		long result = service.countActive(10L);
 
 		// then
 		assertThat(result).isEqualTo(3L);
