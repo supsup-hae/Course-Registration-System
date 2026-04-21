@@ -3,7 +3,10 @@ package com.liveklass.domain.course.controller.query;
 import java.math.BigDecimal;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,11 +16,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.liveklass.common.response.BaseResponse;
 import com.liveklass.common.response.PageResponse;
+import com.liveklass.common.security.UserPrincipal;
 import com.liveklass.common.util.ResponseUtils;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
 import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
+import com.liveklass.domain.enrollment.dto.response.CourseEnrollmentInfo;
+import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -73,4 +79,29 @@ public class CourseQueryController {
 		return ResponseUtils.page(response);
 	}
 
+	@PreAuthorize("hasRole('CREATOR')")
+	@Operation(summary = "강의별 수강생 목록 조회", description = "크리에이터가 자신의 강의에 대한 수강생 목록을 조회합니다.")
+	@GetMapping("/{courseId}/enrollments")
+	public ResponseEntity<PageResponse<CourseEnrollmentInfo>> findCourseEnrollments(
+		@AuthenticationPrincipal final UserPrincipal principal,
+
+		@PathVariable final Long courseId,
+
+		@Parameter(description = "페이지 번호 (0부터 시작)", example = "0")
+		@RequestParam(defaultValue = "0") @Min(0) final int page,
+
+		@Parameter(description = "페이지 크기", example = "10")
+		@RequestParam(defaultValue = "10") @Min(1) @Max(100) final int size,
+
+		@Parameter(description = "수강신청 상태 필터 (PENDING, CONFIRMED, CANCELLED 등)")
+		@RequestParam(required = false) final EnrollmentStatus status,
+
+		@Parameter(description = "정렬 순서 (ASC, DESC)", example = "DESC")
+		@RequestParam(defaultValue = "DESC") final Sort.Direction sortOrder
+	) {
+		Page<CourseEnrollmentInfo> response = courseFacadeService.findCourseEnrollments(
+			principal.userId(), courseId, page, size, status, sortOrder
+		);
+		return ResponseUtils.page(response);
+	}
 }

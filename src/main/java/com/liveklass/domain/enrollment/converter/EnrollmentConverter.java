@@ -2,13 +2,24 @@ package com.liveklass.domain.enrollment.converter;
 
 import com.liveklass.domain.course.converter.CourseConverter;
 import com.liveklass.domain.enrollment.dto.common.EnrollmentCardInfo;
+import com.liveklass.domain.enrollment.dto.response.CourseEnrollmentInfo;
 import com.liveklass.domain.enrollment.dto.response.EnrollmentResDto;
 import com.liveklass.domain.enrollment.entity.Enrollment;
+import com.liveklass.domain.user.converter.UserConverter;
 
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class EnrollmentConverter {
+
+	public CourseEnrollmentInfo toCourseEnrollmentInfo(final Enrollment enrollment) {
+		return CourseEnrollmentInfo.builder()
+			.enrollmentId(enrollment.getEnrollmentId())
+			.student(UserConverter.toUserCardInfo(enrollment.getStudent()))
+			.status(enrollment.getStatus())
+			.enrolledAt(enrollment.getCreatedAt())
+			.build();
+	}
 
 	public EnrollmentResDto toEnrollmentResDto(final Enrollment enrollment) {
 		return EnrollmentResDto.builder()

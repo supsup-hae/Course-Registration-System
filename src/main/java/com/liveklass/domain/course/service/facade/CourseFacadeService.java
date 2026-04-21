@@ -4,10 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.common.error.ErrorCode;
+import com.liveklass.common.util.PageUtils;
 import com.liveklass.domain.course.converter.CourseConverter;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
@@ -21,6 +23,9 @@ import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.cache.CourseDetailCacheService;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
+import com.liveklass.domain.enrollment.converter.EnrollmentConverter;
+import com.liveklass.domain.enrollment.dto.response.CourseEnrollmentInfo;
+import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
 import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
@@ -68,12 +73,14 @@ public class CourseFacadeService {
 		return CourseConverter.toUpdateStatusResDto(course);
 	}
 
+	@Transactional
 	public CourseInfoDto findCourseDetail(final Long courseId) {
 		CourseInfoDto cached = courseDetailCacheService.load(courseId);
 		long currentEnrollmentCount = enrollmentQueryService.countActive(courseId);
 		return CourseConverter.withEnrollmentCount(cached, currentEnrollmentCount);
 	}
 
+	@Transactional(readOnly = true)
 	public Page<CourseCardInfo> findAllCourses(
 		final int page,
 		final int size,
@@ -84,6 +91,22 @@ public class CourseFacadeService {
 	) {
 		return courseQueryService.findAllWithFilters(page, size, status, minPrice, maxPrice, hasCapacity)
 			.map(CourseConverter::toCourseCardInfo);
+	}
+
+	@Transactional(readOnly = true)
+	public Page<CourseEnrollmentInfo> findCourseEnrollments(
+		final Long creatorId,
+		final Long courseId,
+		final int page,
+		final int size,
+		final EnrollmentStatus status,
+		final Sort.Direction sortOrder
+	) {
+		Course course = courseQueryService.findById(courseId);
+		validateCourseBelongToUser(course, creatorId);
+		return enrollmentQueryService.findByCourseId(
+			courseId, status, PageUtils.of(page, size, sortOrder, "createdAt")
+		).map(EnrollmentConverter::toCourseEnrollmentInfo);
 	}
 
 	private void validateRole(final User user) {
