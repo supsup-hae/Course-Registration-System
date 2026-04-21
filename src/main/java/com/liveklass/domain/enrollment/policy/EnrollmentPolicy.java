@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 public class EnrollmentPolicy {
 
 	public static final int PENDING_TTL_MINUTES = 15;
+	public static final int CANCEL_DEADLINE_DAYS = 7;
 	public static final String REASON_TTL_EXPIRED = "TTL_EXPIRED";
 	public static final String REASON_USER_REQUEST = "USER_REQUEST";
 }

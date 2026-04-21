@@ -1,5 +1,7 @@
 package com.liveklass.domain.enrollment.service.facade;
 
+import java.time.LocalDateTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -14,6 +16,7 @@ import com.liveklass.domain.enrollment.converter.EnrollmentConverter;
 import com.liveklass.domain.enrollment.dto.response.EnrollmentResDto;
 import com.liveklass.domain.enrollment.entity.Enrollment;
 import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
+import com.liveklass.domain.enrollment.policy.EnrollmentPolicy;
 import com.liveklass.domain.enrollment.service.command.EnrollmentCommandService;
 import com.liveklass.domain.enrollment.service.concurrency.EnrollmentSlotCounter;
 import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
@@ -78,6 +81,7 @@ public class EnrollmentFacadeService {
 		Enrollment enrollment = enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(enrollmentId);
 		validateEnrollmentBelongToStudent(enrollment, studentId);
 		validateNotCancelled(enrollment);
+		validateCancelDeadline(enrollment);
 
 		enrollmentCommandService.cancel(enrollment);
 
@@ -93,8 +97,6 @@ public class EnrollmentFacadeService {
 
 		return EnrollmentConverter.toEnrollmentResDto(enrollment);
 	}
-
-
 
 	private void validateNoDuplicate(final Long studentId, final Long courseId) {
 		if (enrollmentQueryService.existsActive(studentId, courseId)) {
@@ -136,6 +138,16 @@ public class EnrollmentFacadeService {
 	private void validateNotCancelled(final Enrollment enrollment) {
 		if (EnrollmentStatus.CANCELLED == enrollment.getStatus()) {
 			throw new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE);
+		}
+	}
+
+	private void validateCancelDeadline(final Enrollment enrollment) {
+		if (enrollment.getStatus() != EnrollmentStatus.CONFIRMED) {
+			return;
+		}
+		LocalDateTime deadline = enrollment.getConfirmedAt().plusDays(EnrollmentPolicy.CANCEL_DEADLINE_DAYS);
+		if (!LocalDateTime.now().isBefore(deadline)) {
+			throw new EnrollmentException(ErrorCode.ENROLLMENT_CANCEL_PERIOD_EXPIRED);
 		}
 	}
 }
