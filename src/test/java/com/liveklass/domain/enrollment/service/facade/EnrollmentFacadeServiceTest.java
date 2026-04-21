@@ -229,4 +229,123 @@ class EnrollmentFacadeServiceTest {
 			.satisfies(ex -> assertThat(((EnrollmentException) ex).getErrorCode())
 				.isEqualTo(ErrorCode.ENROLLMENT_NOT_FOUND));
 	}
+
+	@Test
+	@DisplayName("PENDING 상태 취소 시 CANCELLED 반환 및 Redis DECR 호출")
+	void cancelEnrollmentReturnsCancelledAndCallsRedisDecr() {
+		// given
+		Enrollment enrollment = Enrollment.pending(student, course, LocalDateTime.now());
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+		willAnswer(_ -> {
+			enrollment.cancelByUser();
+			return null;
+		}).given(enrollmentCommandService).cancel(enrollment);
+
+		// when
+		EnrollmentResDto result = facade.cancelEnrollment(1L, 999L);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result.status()).isEqualTo(EnrollmentStatus.CANCELLED);
+		verify(redisCounter).decrement(10L);
+	}
+
+	@Test
+	@DisplayName("CONFIRMED 상태 취소 시 CANCELLED 반환 및 Redis DECR 호출")
+	void cancelEnrollmentReturnsCancelledWhenConfirmedAndCallsRedisDecr() {
+		// given
+		Enrollment enrollment = Enrollment.pending(student, course, LocalDateTime.now());
+		enrollment.confirm();
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+		willAnswer(_ -> {
+			enrollment.cancelByUser();
+			return null;
+		}).given(enrollmentCommandService).cancel(enrollment);
+
+		// when
+		EnrollmentResDto result = facade.cancelEnrollment(1L, 999L);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result.status()).isEqualTo(EnrollmentStatus.CANCELLED);
+		verify(redisCounter).decrement(10L);
+	}
+
+	@Test
+	@DisplayName("무제한 정원 강의 취소 시 Redis DECR 미호출")
+	void cancelEnrollmentSkipsRedisDecrWhenUnlimitedCapacity() {
+		// given
+		Course unlimitedCourse = spy(Course.createDraft(
+			User.create("크리에이터", "creator@test.com", "password", Role.CREATOR),
+			new RegisterCourseReqDto("무제한 강의", "설명", BigDecimal.valueOf(10000), null, null, null)
+		));
+		lenient().when(unlimitedCourse.getCourseId()).thenReturn(20L);
+
+		Enrollment enrollment = Enrollment.pending(student, unlimitedCourse, LocalDateTime.now());
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+		willAnswer(_ -> {
+			enrollment.cancelByUser();
+		 return null;
+		}).given(enrollmentCommandService).cancel(enrollment);
+
+		// when
+		EnrollmentResDto result = facade.cancelEnrollment(1L, 999L);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result.status()).isEqualTo(EnrollmentStatus.CANCELLED);
+		verify(redisCounter, never()).decrement(any());
+	}
+
+	@Test
+	@DisplayName("이미 CANCELLED 상태 취소 시 ENROLLMENT_INVALID_STATE 예외 발생")
+	void cancelEnrollmentThrowsInvalidStateWhenAlreadyCancelled() {
+		// given
+		Enrollment enrollment = Enrollment.pending(student, course, LocalDateTime.now());
+		enrollment.cancelByUser();
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+
+		// when & then
+		assertThatThrownBy(() -> facade.cancelEnrollment(1L, 999L))
+			.isInstanceOf(EnrollmentException.class)
+			.satisfies(ex -> assertThat(((EnrollmentException) ex).getErrorCode())
+				.isEqualTo(ErrorCode.ENROLLMENT_INVALID_STATE));
+		verify(enrollmentCommandService, never()).cancel(any());
+	}
+
+	@Test
+	@DisplayName("다른 학생의 enrollment 취소 시 ACCESS_DENIED 예외 발생")
+	void cancelEnrollmentThrowsAccessDeniedWhenStudentIdDiffers() {
+		// given
+		Enrollment enrollment = Enrollment.pending(student, course, LocalDateTime.now());
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+
+		// when & then
+		assertThatThrownBy(() -> facade.cancelEnrollment(2L, 999L))
+			.isInstanceOf(EnrollmentException.class)
+			.satisfies(ex -> assertThat(((EnrollmentException) ex).getErrorCode())
+				.isEqualTo(ErrorCode.ACCESS_DENIED));
+		verify(enrollmentCommandService, never()).cancel(any());
+	}
+
+	@Test
+	@DisplayName("Redis DECR 실패해도 취소 성공 검증")
+	void cancelEnrollmentSucceedsEvenIfRedisDecrFails() {
+		// given
+		Enrollment enrollment = Enrollment.pending(student, course, LocalDateTime.now());
+		given(enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(999L)).willReturn(enrollment);
+		willAnswer(_ -> {
+			enrollment.cancelByUser();
+			return null;
+		}).given(enrollmentCommandService).cancel(enrollment);
+		willThrow(new RuntimeException("Redis error")).given(redisCounter).decrement(10L);
+
+		// when
+		EnrollmentResDto result = facade.cancelEnrollment(1L, 999L);
+
+		// then
+		assertThat(result).isNotNull();
+		assertThat(result.status()).isEqualTo(EnrollmentStatus.CANCELLED);
+		verify(redisCounter).decrement(10L);
+	}
 }

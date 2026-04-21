@@ -173,6 +173,68 @@ class EnrollmentCommandControllerTest {
 			.andExpect(status().isConflict());
 	}
 
+	@Test
+	@DisplayName("STUDENT 권한으로 취소 API 호출 시 200 반환")
+	void cancelEnrollmentByStudentReturns200() throws Exception {
+		// given
+		given(enrollmentFacadeService.cancelEnrollment(1L, 999L))
+			.willReturn(cancelledResDto());
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.enrollmentId").value(999))
+			.andExpect(jsonPath("$.data.status").value("CANCELLED"));
+	}
+
+	@Test
+	@DisplayName("인증 없이 취소 API 호출 시 403 반환")
+	void cancelEnrollmentWithoutAuthReturns403() throws Exception {
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("CREATOR 권한으로 취소 API 호출 시 403 반환")
+	void cancelEnrollmentByCreatorReturns403() throws Exception {
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "CREATOR"))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("이미 취소된 상태 취소 시 409 반환")
+	void cancelEnrollmentWithInvalidStateReturns409() throws Exception {
+		// given
+		given(enrollmentFacadeService.cancelEnrollment(1L, 999L))
+			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE));
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isConflict());
+	}
+
+	@Test
+	@DisplayName("다른 학생 enrollment 취소 시 403 반환")
+	void cancelOtherStudentEnrollmentReturns403() throws Exception {
+		// given
+		given(enrollmentFacadeService.cancelEnrollment(1L, 999L))
+			.willThrow(new EnrollmentException(ErrorCode.ACCESS_DENIED));
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isForbidden());
+	}
+
 	private EnrollmentResDto pendingResDto() {
 		return EnrollmentResDto.builder()
 			.enrollmentId(999L)
@@ -189,6 +251,15 @@ class EnrollmentCommandControllerTest {
 			.courseId(10L)
 			.studentId(1L)
 			.status(EnrollmentStatus.CONFIRMED)
+			.build();
+	}
+
+	private EnrollmentResDto cancelledResDto() {
+		return EnrollmentResDto.builder()
+			.enrollmentId(999L)
+			.courseId(10L)
+			.studentId(1L)
+			.status(EnrollmentStatus.CANCELLED)
 			.build();
 	}
 }
