@@ -7,6 +7,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -34,6 +35,11 @@ public class RedisConfig {
 		config.setPassword(redisProperties.password());
 
 		return new LettuceConnectionFactory(config);
+	}
+
+	@Bean
+	public StringRedisTemplate stringRedisTemplate() {
+		return new StringRedisTemplate(redisConnectionFactory());
 	}
 
 	@Bean

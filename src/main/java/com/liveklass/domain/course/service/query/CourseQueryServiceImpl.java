@@ -1,12 +1,16 @@
 package com.liveklass.domain.course.service.query;
 
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.dto.request.FindCoursesReqDto;
 import com.liveklass.domain.course.entity.Course;
+import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.repository.CourseRepository;
 
@@ -16,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class CourseQueryServiceImpl implements CourseQueryService {
 
@@ -26,6 +31,15 @@ public class CourseQueryServiceImpl implements CourseQueryService {
 		Course course = courseRepository.findById(courseId)
 			.orElseThrow(() -> new CourseException(ErrorCode.NOT_FOUND));
 		log.info("[Course] 강의 조회 : id = {}", courseId);
+		return course;
+	}
+
+	@Override
+	@Transactional
+	public Course findByIdForUpdate(final Long courseId) {
+		Course course = courseRepository.findByIdForUpdate(courseId)
+			.orElseThrow(() -> new CourseException(ErrorCode.NOT_FOUND));
+		log.info("[Course] 강의 조회(FOR UPDATE) : id = {}", courseId);
 		return course;
 	}
 
@@ -51,5 +65,12 @@ public class CourseQueryServiceImpl implements CourseQueryService {
 			reqDto.getHasCapacity(),
 			pageable
 		);
+	}
+
+	@Override
+	public List<Course> findOpenCoursesWithCapacity() {
+		List<Course> courses = courseRepository.findByStatusAndCapacityNotNull(CourseStatus.OPEN);
+		log.info("[Course] OPEN 상태 정원 제한 강의 조회 : count = {}", courses.size());
+		return courses;
 	}
 }

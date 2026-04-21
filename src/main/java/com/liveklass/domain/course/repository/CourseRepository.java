@@ -1,16 +1,20 @@
 package com.liveklass.domain.course.repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.course.enums.CourseStatus;
+
+import jakarta.persistence.LockModeType;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
 
@@ -40,4 +44,11 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 		@Param("hasCapacity") Boolean hasCapacity,
 		Pageable pageable
 	);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT c FROM Course c WHERE c.courseId = :courseId")
+	Optional<Course> findByIdForUpdate(@Param("courseId") Long courseId);
+
+	@Query("SELECT c FROM Course c WHERE c.status = :status AND c.capacity IS NOT NULL")
+	List<Course> findByStatusAndCapacityNotNull(@Param("status") CourseStatus status);
 }

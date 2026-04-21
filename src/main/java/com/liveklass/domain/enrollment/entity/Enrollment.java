@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import com.liveklass.common.entity.BaseEntity;
 import com.liveklass.domain.course.entity.Course;
 import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
+import com.liveklass.domain.enrollment.policy.EnrollmentPolicy;
 import com.liveklass.domain.user.entity.User;
 
 import jakarta.persistence.Column;
@@ -30,12 +31,12 @@ import lombok.NoArgsConstructor;
 	name = "enrollments",
 	indexes = {
 		@Index(name = "IX_ENROLLMENTS_STUDENT", columnList = "student_id"),
-		@Index(name = "IX_ENROLLMENTS_COURSE", columnList = "course_id")
+		@Index(name = "IX_ENROLLMENTS_COURSE", columnList = "course_id"),
+		@Index(name = "IX_ENROLLMENTS_EXPIRES_AT", columnList = "expires_at")
 	}
 )
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Enrollment extends BaseEntity {
-
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(name = "enrollment_id")
@@ -56,30 +57,39 @@ public class Enrollment extends BaseEntity {
 	@Column(name = "waitlist_order")
 	private Integer waitlistOrder;
 
+	@Column(name = "expires_at")
+	private LocalDateTime expiresAt;
+
 	@Column(name = "confirmed_at")
 	private LocalDateTime confirmedAt;
 
 	@Column(name = "cancelled_at")
 	private LocalDateTime cancelledAt;
 
+	@Column(name = "cancelled_reason", length = 100)
+	private String cancelledReason;
+
 	@Builder
 	private Enrollment(
 		final User student,
 		final Course course,
 		final EnrollmentStatus status,
-		final Integer waitlistOrder
+		final Integer waitlistOrder,
+		final LocalDateTime expiresAt
 	) {
 		this.student = student;
 		this.course = course;
 		this.status = status;
 		this.waitlistOrder = waitlistOrder;
+		this.expiresAt = expiresAt;
 	}
 
-	public static Enrollment pending(final User student, final Course course) {
+	public static Enrollment pending(final User student, final Course course, final LocalDateTime now) {
 		return Enrollment.builder()
 			.student(student)
 			.course(course)
 			.status(EnrollmentStatus.PENDING)
+			.expiresAt(now.plusMinutes(EnrollmentPolicy.PENDING_TTL_MINUTES))
 			.build();
 	}
 
@@ -92,17 +102,30 @@ public class Enrollment extends BaseEntity {
 			.build();
 	}
 
-	public void isConfirmed() {
+	public void confirm() {
 		this.status = EnrollmentStatus.CONFIRMED;
 		if (this.confirmedAt == null) {
 			this.confirmedAt = LocalDateTime.now();
 		}
 	}
 
-	public void isCancelled() {
+	public void expire() {
+		markCancelled(EnrollmentPolicy.REASON_TTL_EXPIRED);
+	}
+
+	public void cancelByUser() {
+		markCancelled(EnrollmentPolicy.REASON_USER_REQUEST);
+	}
+
+	private void markCancelled(final String reason) {
 		this.status = EnrollmentStatus.CANCELLED;
+		this.cancelledReason = reason;
 		if (this.cancelledAt == null) {
 			this.cancelledAt = LocalDateTime.now();
 		}
+	}
+
+	public boolean isPending() {
+		return this.status == EnrollmentStatus.PENDING;
 	}
 }
