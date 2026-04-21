@@ -146,7 +146,7 @@ public class EnrollmentFacadeService {
 			return;
 		}
 		LocalDateTime deadline = enrollment.getConfirmedAt().plusDays(EnrollmentPolicy.CANCEL_DEADLINE_DAYS);
-		if (!LocalDateTime.now().isBefore(deadline)) {
+		if (LocalDateTime.now().isAfter(deadline)) {
 			throw new EnrollmentException(ErrorCode.ENROLLMENT_CANCEL_PERIOD_EXPIRED);
 		}
 	}
