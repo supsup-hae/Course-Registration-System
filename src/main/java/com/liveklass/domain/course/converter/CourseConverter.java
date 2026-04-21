@@ -39,7 +39,11 @@ public class CourseConverter {
 			.build();
 	}
 
-	public CourseInfoDto toCourseInfoDto(final Course course, final UserInfoDto creatorInfo) {
+	public CourseInfoDto toCourseInfoDto(
+		final Course course,
+		final UserInfoDto creatorInfo,
+		final long currentEnrollmentCount
+	) {
 		return CourseInfoDto.builder()
 			.courseId(course.getCourseId())
 			.creator(creatorInfo)
@@ -51,6 +55,7 @@ public class CourseConverter {
 			.startDate(course.getStartDate())
 			.endDate(course.getEndDate())
 			.createdAt(course.getCreatedAt())
+			.currentEnrollmentCount(currentEnrollmentCount)
 			.build();
 	}
 }

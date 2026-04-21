@@ -22,6 +22,7 @@ import com.liveklass.domain.course.enums.CourseStatus;
 import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
+import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
 import com.liveklass.domain.user.converter.UserConverter;
 import com.liveklass.domain.user.dto.common.UserInfoDto;
 import com.liveklass.domain.user.entity.User;
@@ -37,6 +38,8 @@ public class CourseFacadeService {
 
 	private final CourseCommandService courseCommandService;
 	private final CourseQueryService courseQueryService;
+
+	private final EnrollmentQueryService enrollmentQueryService;
 	private final UserQueryService userQueryService;
 
 	@Transactional
@@ -70,9 +73,9 @@ public class CourseFacadeService {
 	@Cacheable(cacheNames = "course:detail", key = "#courseId")
 	public CourseInfoDto findCourseDetail(final Long courseId) {
 		Course course = courseQueryService.findByIdWithCreator(courseId);
-		//TODO 현재 신청 인원 정보 포함 호출 로직 작성 예정
 		UserInfoDto creatorInfo = UserConverter.toUserInfo(course.getCreator());
-		return CourseConverter.toCourseInfoDto(course, creatorInfo);
+		long currentEnrollmentCount = enrollmentQueryService.countActive(courseId);
+		return CourseConverter.toCourseInfoDto(course, creatorInfo, currentEnrollmentCount);
 	}
 
 	public Page<CourseCardInfo> findAllCourses(

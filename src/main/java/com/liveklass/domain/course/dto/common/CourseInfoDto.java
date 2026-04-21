@@ -40,7 +40,10 @@ public record CourseInfoDto(
 	LocalDateTime endDate,
 
 	@Schema(description = "강의 생성 일시", example = "2026-04-19T10:00:00")
-	LocalDateTime createdAt
+	LocalDateTime createdAt,
+
+	@Schema(description = "현재 수강 인원", example = "7")
+	Long currentEnrollmentCount
 ) {
 }
 

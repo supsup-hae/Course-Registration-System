@@ -34,6 +34,7 @@ import com.liveklass.domain.course.exception.CourseException;
 import com.liveklass.domain.course.service.command.CourseCommandService;
 import com.liveklass.domain.course.service.facade.CourseFacadeService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
+import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
 import com.liveklass.domain.user.entity.User;
 import com.liveklass.domain.user.enums.Role;
 import com.liveklass.domain.user.exception.UserException;
@@ -50,6 +51,9 @@ class CourseFacadeServiceTest {
 
 	@Mock
 	private UserQueryService userQueryService;
+
+	@Mock
+	private EnrollmentQueryService enrollmentQueryService;
 
 	@InjectMocks
 	private CourseFacadeService courseFacadeService;
@@ -179,7 +183,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.OPEN_REQUIRES_START_DATE));
 	}
 
@@ -197,7 +201,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_COURSE_DATE_RANGE));
 	}
 
@@ -213,7 +217,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.INVALID_COURSE_STATUS_TRANSITION));
 	}
 
@@ -267,6 +271,7 @@ class CourseFacadeServiceTest {
 		// given
 		Long courseId = 1L;
 		given(courseQueryService.findByIdWithCreator(courseId)).willReturn(draftCourse);
+		given(enrollmentQueryService.countActive(courseId)).willReturn(0L);
 
 		// when
 		CourseInfoDto result = courseFacadeService.findCourseDetail(courseId);
@@ -276,6 +281,7 @@ class CourseFacadeServiceTest {
 		assertThat(result.status()).isEqualTo(CourseStatus.DRAFT);
 		assertThat(result.creator().name()).isEqualTo(creator.getName());
 		assertThat(result.creator().email()).isEqualTo(creator.getEmail());
+		assertThat(result.currentEnrollmentCount()).isZero();
 	}
 
 	@Test
@@ -289,7 +295,7 @@ class CourseFacadeServiceTest {
 		// when & then
 		assertThatThrownBy(() -> courseFacadeService.findCourseDetail(courseId))
 			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException) ex).getErrorCode())
+			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
 				.isEqualTo(ErrorCode.NOT_FOUND));
 	}
 
@@ -313,7 +319,8 @@ class CourseFacadeServiceTest {
 	@DisplayName("status 필터로 OPEN 강의만 조회")
 	void findAllCourses_status_필터_적용() {
 		// given
-		given(courseQueryService.findAllWithFilters(0, 10, CourseStatus.OPEN, null, null, null)).willReturn(Page.empty());
+		given(courseQueryService.findAllWithFilters(0, 10, CourseStatus.OPEN, null, null, null)).willReturn(
+			Page.empty());
 
 		// when
 		Page<CourseCardInfo> result = courseFacadeService.findAllCourses(0, 10, CourseStatus.OPEN, null, null, null);
