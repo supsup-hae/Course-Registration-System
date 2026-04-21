@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.liveklass.domain.course.entity.Course;
+import com.liveklass.domain.course.service.CourseClosingService;
 import com.liveklass.domain.course.service.query.CourseQueryService;
 import com.liveklass.domain.enrollment.service.concurrency.EnrollmentSlotCounter;
 import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
@@ -22,8 +23,9 @@ public class EnrollmentReconciliationScheduler {
 	private final CourseQueryService courseQueryService;
 	private final EnrollmentQueryService enrollmentQueryService;
 	private final EnrollmentSlotCounter redisCounter;
+	private final CourseClosingService courseClosingService;
 
-	@Scheduled(fixedDelay = 300_000L)
+	@Scheduled(cron = "0 */5 * * * *")
 	@Transactional(readOnly = true)
 	public void reconcile() {
 		List<Course> openCourses = courseQueryService.findOpenCoursesWithCapacity();
@@ -33,9 +35,16 @@ public class EnrollmentReconciliationScheduler {
 			if (redisCount < dbCount) {
 				redisCounter.set(course.getCourseId(), dbCount);
 				log.warn("[Enrollment] Redis 카운터 보정 : courseId = {}, dbCount = {}, redisCount = {} -> {}",
-					course.getCourseId(), dbCount, redisCount, dbCount
-				);
+						course.getCourseId(), dbCount, redisCount, dbCount);
 			}
+		}
+	}
+
+	@Scheduled(cron = "0 */5 * * * *")
+	public void closeFullCourses() {
+		List<Course> openCourses = courseQueryService.findOpenCoursesWithCapacity();
+		for (Course course : openCourses) {
+			courseClosingService.closeIfFull(course.getCourseId());
 		}
 	}
 }

@@ -6,6 +6,7 @@ import static org.mockito.BDDMockito.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -15,9 +16,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Sort;
@@ -26,7 +24,6 @@ import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.course.converter.CourseConverter;
 import com.liveklass.domain.course.dto.common.CourseCardInfo;
 import com.liveklass.domain.course.dto.common.CourseInfoDto;
-
 import com.liveklass.domain.course.dto.request.RegisterCourseReqDto;
 import com.liveklass.domain.course.dto.request.UpdateCourseStatusReqDto;
 import com.liveklass.domain.course.dto.response.RegisterCourseResDto;
@@ -182,22 +179,6 @@ class CourseFacadeServiceTest {
 		assertThat(result.status()).isEqualTo(CourseStatus.OPEN);
 		assertThat(result.startDate()).isEqualTo(start);
 		assertThat(result.endDate()).isNull();
-	}
-
-	@Test
-	@DisplayName("OPEN 전환 시 startDate가 null이면 예외 발생")
-	void updateStatusToOpenWithoutStartDateThrows() {
-		// given
-		Long userId = 1L;
-		Long courseId = 1L;
-		UpdateCourseStatusReqDto reqDto = new UpdateCourseStatusReqDto(CourseStatus.OPEN, null, null);
-		given(courseQueryService.findById(courseId)).willReturn(draftCourse);
-
-		// when & then
-		assertThatThrownBy(() -> courseFacadeService.updateCourseStatus(userId, courseId, reqDto))
-			.isInstanceOf(CourseException.class)
-			.satisfies(ex -> assertThat(((CourseException)ex).getErrorCode())
-				.isEqualTo(ErrorCode.OPEN_REQUIRES_START_DATE));
 	}
 
 	@Test

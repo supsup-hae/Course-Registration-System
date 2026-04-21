@@ -115,8 +115,12 @@ public class Course extends BaseEntity {
 
 	public void openWith(final LocalDateTime startDate, final LocalDateTime endDate) {
 		this.status = CourseStatus.OPEN;
-		this.startDate = startDate;
-		this.endDate = endDate;
+		if (startDate != null) {
+			this.startDate = startDate;
+		}
+		if (endDate != null) {
+			this.endDate = endDate;
+		}
 	}
 
 	public boolean isUnlimitedCapacity() {
