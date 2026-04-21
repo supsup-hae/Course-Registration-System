@@ -41,11 +41,11 @@ public enum ErrorCode {
 	OPEN_REQUIRES_START_DATE(HttpStatus.BAD_REQUEST, "CO-003", "모집 시작일은 필수입니다."),
 
 	/**
-	 * Enrollment Error (CO-xxx)
+	 * Enrollment Error (E-xxx)
 	 */
 	ENROLLMENT_CAPACITY_FULL(HttpStatus.CONFLICT, "E-001", "강의 정원이 모두 찼습니다"),
-	ENROLLMENT_INVALID_STATE(HttpStatus.CONFLICT, "E-003", "수강신청 상태가 올바르지 않습니다"),
-	ENROLLMENT_DUPLICATE(HttpStatus.CONFLICT, "E-006", "이미 진행 중인 수강신청이 있습니다");
+	ENROLLMENT_INVALID_STATE(HttpStatus.CONFLICT, "E-002", "수강신청 상태가 올바르지 않습니다"),
+	ENROLLMENT_DUPLICATE(HttpStatus.CONFLICT, "E-003", "이미 진행 중인 수강신청이 있습니다");
 
 	private final HttpStatus httpStatus;
 	private final String code;
