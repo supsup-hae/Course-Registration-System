@@ -3,6 +3,9 @@ package com.liveklass.domain.enrollment.service.query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.liveklass.common.error.ErrorCode;
+import com.liveklass.domain.enrollment.EnrollmentException;
+import com.liveklass.domain.enrollment.entity.Enrollment;
 import com.liveklass.domain.enrollment.repository.EnrollmentRepository;
 
 import lombok.AccessLevel;
@@ -31,5 +34,23 @@ public class EnrollmentQueryServiceImpl implements EnrollmentQueryService {
 		log.info("[Enrollment] 기존 활성 수강신청 존재 여부 조회 : studentId = {}, courseId = {}, exists = {}",
 			studentId, courseId, exists);
 		return exists;
+	}
+
+	@Override
+	public Enrollment findWithStudentById(final Long enrollmentId) {
+		Enrollment enrollment = enrollmentRepository.findWithStudentById(enrollmentId)
+			.orElseThrow(() -> new EnrollmentException(ErrorCode.ENROLLMENT_NOT_FOUND));
+		log.info("[Enrollment] 수강신청 조회 (Student 포함) : enrollmentId = {}", enrollment.getEnrollmentId());
+		return enrollment;
+	}
+
+	@Override
+	@Transactional
+	public Enrollment findWithCourseAndStudentByIdForUpdate(final Long enrollmentId) {
+		Enrollment enrollment = enrollmentRepository.findWithCourseAndStudentByIdForUpdate(enrollmentId)
+			.orElseThrow(() -> new EnrollmentException(ErrorCode.ENROLLMENT_NOT_FOUND));
+		log.info("[Enrollment] 수강신청 조회 (Course, Student 포함, FOR UPDATE) : enrollmentId = {}",
+			enrollment.getEnrollmentId());
+		return enrollment;
 	}
 }

@@ -10,6 +10,7 @@ import com.liveklass.domain.enrollment.EnrollmentException;
 import com.liveklass.domain.enrollment.converter.EnrollmentConverter;
 import com.liveklass.domain.enrollment.dto.response.EnrollmentResDto;
 import com.liveklass.domain.enrollment.entity.Enrollment;
+import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
 import com.liveklass.domain.enrollment.service.command.EnrollmentCommandService;
 import com.liveklass.domain.enrollment.service.concurrency.EnrollmentSlotCounter;
 import com.liveklass.domain.enrollment.service.query.EnrollmentQueryService;
@@ -33,7 +34,7 @@ public class EnrollmentFacadeService {
 	private final CourseQueryService courseQueryService;
 
 	@Transactional
-	public EnrollmentResDto createPending(final Long studentId, final Long courseId) {
+	public EnrollmentResDto createPendingEnrollment(final Long studentId, final Long courseId) {
 		User student = userQueryService.findById(studentId);
 		Course course = courseQueryService.findById(courseId);
 
@@ -60,6 +61,36 @@ public class EnrollmentFacadeService {
 		}
 	}
 
+	@Transactional
+	public EnrollmentResDto confirmEnrollment(final Long studentId, final Long enrollmentId) {
+		Enrollment enrollment = enrollmentQueryService.findWithStudentById(enrollmentId);
+		validateEnrollmentBelongToStudent(enrollment, studentId);
+		validateStatusIsPending(enrollment);
+		enrollmentCommandService.confirm(enrollment);
+		return EnrollmentConverter.toEnrollmentResDto(enrollment);
+	}
+
+	@Transactional
+	public EnrollmentResDto cancelEnrollment(final Long studentId, final Long enrollmentId) {
+		Enrollment enrollment = enrollmentQueryService.findWithCourseAndStudentByIdForUpdate(enrollmentId);
+		validateEnrollmentBelongToStudent(enrollment, studentId);
+		validateNotCancelled(enrollment);
+
+		enrollmentCommandService.cancel(enrollment);
+
+		Course course = enrollment.getCourse();
+		if (!course.isUnlimitedCapacity()) {
+			try {
+				redisCounter.decrement(course.getCourseId());
+			} catch (Exception ex) {
+				log.warn("[Enrollment] 수강신청 취소 됨, 하지만 Redis 카운터 감소 실패 (스케줄러 보정 필요) : courseId = {}",
+					course.getCourseId(), ex);
+			}
+		}
+
+		return EnrollmentConverter.toEnrollmentResDto(enrollment);
+	}
+
 	private void validateNoDuplicate(final Long studentId, final Long courseId) {
 		if (enrollmentQueryService.existsActive(studentId, courseId)) {
 			throw new EnrollmentException(ErrorCode.ENROLLMENT_DUPLICATE);
@@ -82,6 +113,24 @@ public class EnrollmentFacadeService {
 		long active = enrollmentQueryService.countActive(course.getCourseId());
 		if (active >= course.getCapacity()) {
 			throw new EnrollmentException(ErrorCode.ENROLLMENT_CAPACITY_FULL);
+		}
+	}
+
+	private void validateEnrollmentBelongToStudent(final Enrollment enrollment, final Long studentId) {
+		if (!enrollment.getStudent().getUserId().equals(studentId)) {
+			throw new EnrollmentException(ErrorCode.ACCESS_DENIED);
+		}
+	}
+
+	private void validateStatusIsPending(final Enrollment enrollment) {
+		if (!enrollment.isPending()) {
+			throw new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE);
+		}
+	}
+
+	private void validateNotCancelled(final Enrollment enrollment) {
+		if (EnrollmentStatus.CANCELLED == enrollment.getStatus()) {
+			throw new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE);
 		}
 	}
 }

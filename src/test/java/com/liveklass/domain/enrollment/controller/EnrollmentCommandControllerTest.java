@@ -22,14 +22,15 @@ import com.liveklass.common.config.SecurityConfig;
 import com.liveklass.common.constants.AuthConstants;
 import com.liveklass.common.error.ErrorCode;
 import com.liveklass.domain.enrollment.EnrollmentException;
+import com.liveklass.domain.enrollment.controller.command.EnrollmentCommandController;
 import com.liveklass.domain.enrollment.dto.request.CreateEnrollmentReqDto;
 import com.liveklass.domain.enrollment.dto.response.EnrollmentResDto;
 import com.liveklass.domain.enrollment.enums.EnrollmentStatus;
 import com.liveklass.domain.enrollment.service.facade.EnrollmentFacadeService;
 
-@WebMvcTest(EnrollmentController.class)
+@WebMvcTest(EnrollmentCommandController.class)
 @Import(SecurityConfig.class)
-class EnrollmentControllerTest {
+class EnrollmentCommandControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -48,7 +49,7 @@ class EnrollmentControllerTest {
 	@DisplayName("STUDENT 권한으로 수강신청 생성 API 호출 시 201 반환")
 	void studentRoleReturns201() throws Exception {
 		// given
-		given(enrollmentFacadeService.createPending(1L, 10L))
+		given(enrollmentFacadeService.createPendingEnrollment(1L, 10L))
 			.willReturn(pendingResDto());
 
 		// when & then
@@ -99,7 +100,7 @@ class EnrollmentControllerTest {
 	@Test
 	@DisplayName("정원 초과 시 409 반환")
 	void capacityFullReturns409() throws Exception {
-		given(enrollmentFacadeService.createPending(1L, 10L))
+		given(enrollmentFacadeService.createPendingEnrollment(1L, 10L))
 			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_CAPACITY_FULL));
 
 		mockMvc.perform(post("/api/v1/enrollments")
@@ -113,7 +114,7 @@ class EnrollmentControllerTest {
 	@Test
 	@DisplayName("중복 신청 시 409 반환")
 	void duplicateEnrollmentReturns409() throws Exception {
-		given(enrollmentFacadeService.createPending(1L, 10L))
+		given(enrollmentFacadeService.createPendingEnrollment(1L, 10L))
 			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_DUPLICATE));
 
 		mockMvc.perform(post("/api/v1/enrollments")
@@ -124,6 +125,116 @@ class EnrollmentControllerTest {
 			.andExpect(status().isConflict());
 	}
 
+	@Test
+	@DisplayName("STUDENT 권한으로 확정 API 호출 시 200 반환")
+	void confirmEnrollmentByStudentReturns200() throws Exception {
+		// given
+		given(enrollmentFacadeService.confirmEnrollment(1L, 999L))
+			.willReturn(confirmedResDto());
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/confirm", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.enrollmentId").value(999))
+			.andExpect(jsonPath("$.data.status").value("CONFIRMED"));
+	}
+
+	@Test
+	@DisplayName("인증 없이 확정 API 호출 시 403 반환")
+	void confirmEnrollmentWithoutAuthReturns403() throws Exception {
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/confirm", 999L))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("CREATOR 권한으로 확정 API 호출 시 403 반환")
+	void confirmEnrollmentByCreatorReturns403() throws Exception {
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/confirm", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "CREATOR"))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("이미 확정/취소된 상태 확정 시 409 반환")
+	void confirmEnrollmentWithInvalidStateReturns409() throws Exception {
+		// given
+		given(enrollmentFacadeService.confirmEnrollment(1L, 999L))
+			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE));
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/confirm", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isConflict());
+	}
+
+	@Test
+	@DisplayName("STUDENT 권한으로 취소 API 호출 시 200 반환")
+	void cancelEnrollmentByStudentReturns200() throws Exception {
+		// given
+		given(enrollmentFacadeService.cancelEnrollment(1L, 999L))
+			.willReturn(cancelledResDto());
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.enrollmentId").value(999))
+			.andExpect(jsonPath("$.data.status").value("CANCELLED"));
+	}
+
+	@Test
+	@DisplayName("인증 없이 취소 API 호출 시 403 반환")
+	void cancelEnrollmentWithoutAuthReturns403() throws Exception {
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("CREATOR 권한으로 취소 API 호출 시 403 반환")
+	void cancelEnrollmentByCreatorReturns403() throws Exception {
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "CREATOR"))
+			.andExpect(status().isForbidden());
+	}
+
+	@Test
+	@DisplayName("이미 취소된 상태 취소 시 409 반환")
+	void cancelEnrollmentWithInvalidStateReturns409() throws Exception {
+		// given
+		given(enrollmentFacadeService.cancelEnrollment(1L, 999L))
+			.willThrow(new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE));
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isConflict());
+	}
+
+	@Test
+	@DisplayName("다른 학생 enrollment 취소 시 403 반환")
+	void cancelOtherStudentEnrollmentReturns403() throws Exception {
+		// given
+		given(enrollmentFacadeService.cancelEnrollment(1L, 999L))
+			.willThrow(new EnrollmentException(ErrorCode.ACCESS_DENIED));
+
+		// when & then
+		mockMvc.perform(patch("/api/v1/enrollments/{id}/cancel", 999L)
+				.header(AuthConstants.HEADER_USER_ID, "1")
+				.header(AuthConstants.HEADER_USER_ROLE, "STUDENT"))
+			.andExpect(status().isForbidden());
+	}
+
 	private EnrollmentResDto pendingResDto() {
 		return EnrollmentResDto.builder()
 			.enrollmentId(999L)
@@ -131,6 +242,24 @@ class EnrollmentControllerTest {
 			.studentId(1L)
 			.status(EnrollmentStatus.PENDING)
 			.expiresAt(LocalDateTime.now().plusMinutes(15))
+			.build();
+	}
+
+	private EnrollmentResDto confirmedResDto() {
+		return EnrollmentResDto.builder()
+			.enrollmentId(999L)
+			.courseId(10L)
+			.studentId(1L)
+			.status(EnrollmentStatus.CONFIRMED)
+			.build();
+	}
+
+	private EnrollmentResDto cancelledResDto() {
+		return EnrollmentResDto.builder()
+			.enrollmentId(999L)
+			.courseId(10L)
+			.studentId(1L)
+			.status(EnrollmentStatus.CANCELLED)
 			.build();
 	}
 }

@@ -48,5 +48,13 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 		@Param("threshold") LocalDateTime threshold
 	);
 
-	Optional<Enrollment> findByEnrollmentIdAndStatus(Long enrollmentId, EnrollmentStatus status);
+	@Query("SELECT e FROM Enrollment e JOIN FETCH e.student WHERE e.enrollmentId = :enrollmentId")
+	Optional<Enrollment> findWithStudentById(@Param("enrollmentId") Long enrollmentId);
+
+	@Query("select e FROM Enrollment e JOIN FETCH e.course JOIN FETCH e.student WHERE e.enrollmentId = :enrollmentId")
+	Optional<Enrollment> findWithCourseAndStudentById(@Param("enrollmentId") Long enrollmentId);
+
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("select e FROM Enrollment e JOIN FETCH e.course JOIN FETCH e.student WHERE e.enrollmentId = :enrollmentId")
+	Optional<Enrollment> findWithCourseAndStudentByIdForUpdate(@Param("enrollmentId") Long enrollmentId);
 }

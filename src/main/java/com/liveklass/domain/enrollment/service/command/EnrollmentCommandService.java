@@ -9,4 +9,8 @@ public interface EnrollmentCommandService {
 	Enrollment savePending(User student, Course course);
 
 	void expire(Enrollment enrollment);
+
+	void confirm(Enrollment enrollment);
+
+	void cancel(Enrollment enrollment);
 }
