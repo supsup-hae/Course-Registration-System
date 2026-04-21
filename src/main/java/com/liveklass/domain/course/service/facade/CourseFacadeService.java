@@ -131,9 +131,6 @@ public class CourseFacadeService {
 		if (!course.canTransitionTo(reqDto.status())) {
 			throw new CourseException(ErrorCode.INVALID_COURSE_STATUS_TRANSITION);
 		}
-		if (reqDto.status() == CourseStatus.OPEN && reqDto.startDate() == null) {
-			throw new CourseException(ErrorCode.OPEN_REQUIRES_START_DATE);
-		}
 		if (reqDto.status() == CourseStatus.OPEN && isInvalidDateRange(reqDto.startDate(), reqDto.endDate())) {
 			throw new CourseException(ErrorCode.INVALID_COURSE_DATE_RANGE);
 		}
