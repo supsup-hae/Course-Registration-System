@@ -67,13 +67,12 @@ class UserQueryControllerTest {
 	}
 
 	@Test
-	@DisplayName("인증 없이 내 수강신청 목록 조회 - 401/403 반환")
-	void unauthenticatedUserReturns4xx() throws Exception {
+	@DisplayName("인증 없이 내 수강신청 목록 조회 - 403 반환")
+	void unauthenticatedUserReturns403() throws Exception {
 		// when & then
-		// No auth headers
 		mockMvc.perform(get("/api/v1/users/me/enrollments")
 				.accept(MediaType.APPLICATION_JSON))
-			.andExpect(status().isForbidden()); // Spring Security default config maps to 403 or 401.
+			.andExpect(status().isForbidden());
 	}
 
 	@Test
@@ -119,7 +118,7 @@ class UserQueryControllerTest {
 	}
 
 	@Test
-	@DisplayName("size=0 요청 시 400 반환 (validation)")
+	@DisplayName("size=-1 요청 시 400 반환 (validation)")
 	void zeroSizeReturns400() throws Exception {
 		// when & then
 		mockMvc.perform(get("/api/v1/users/me/enrollments")
