@@ -49,4 +49,7 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
 	);
 
 	Optional<Enrollment> findByEnrollmentIdAndStatus(Long enrollmentId, EnrollmentStatus status);
+
+	@Query("select e from Enrollment e JOIN FETCH e.student where e.enrollmentId = :enrollmentId")
+	Optional<Enrollment> findWithStudentById(Long enrollmentId);
 }

@@ -37,4 +37,10 @@ public class EnrollmentCommandServiceImpl implements EnrollmentCommandService {
 		enrollment.expire();
 		log.info("[Enrollment] 시간 초과 만료 : enrollmentId = {}", enrollment.getEnrollmentId());
 	}
+
+	@Override
+	public void confirm(final Enrollment enrollment) {
+		enrollment.confirm();
+		log.info("[Enrollment] 확정 완료 : enrollmentId = {}", enrollment.getEnrollmentId());
+	}
 }

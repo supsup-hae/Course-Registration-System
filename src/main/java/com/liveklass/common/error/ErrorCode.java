@@ -45,7 +45,8 @@ public enum ErrorCode {
 	 */
 	ENROLLMENT_CAPACITY_FULL(HttpStatus.CONFLICT, "E-001", "강의 정원이 모두 찼습니다"),
 	ENROLLMENT_INVALID_STATE(HttpStatus.CONFLICT, "E-002", "수강신청 상태가 올바르지 않습니다"),
-	ENROLLMENT_DUPLICATE(HttpStatus.CONFLICT, "E-003", "이미 진행 중인 수강신청이 있습니다");
+	ENROLLMENT_DUPLICATE(HttpStatus.CONFLICT, "E-003", "이미 진행 중인 수강신청이 있습니다"),
+	ENROLLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "E-004", "수강신청 정보를 찾을 수 없습니다.");
 
 	private final HttpStatus httpStatus;
 	private final String code;

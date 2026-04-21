@@ -33,7 +33,7 @@ public class EnrollmentFacadeService {
 	private final CourseQueryService courseQueryService;
 
 	@Transactional
-	public EnrollmentResDto createPending(final Long studentId, final Long courseId) {
+	public EnrollmentResDto createPendingEnrollment(final Long studentId, final Long courseId) {
 		User student = userQueryService.findById(studentId);
 		Course course = courseQueryService.findById(courseId);
 
@@ -60,6 +60,15 @@ public class EnrollmentFacadeService {
 		}
 	}
 
+	@Transactional
+	public EnrollmentResDto confirmEnrollment(final Long studentId, final Long enrollmentId) {
+		Enrollment enrollment = enrollmentQueryService.findWithStudentById(enrollmentId);
+		validateEnrollmentBelongToStudent(enrollment, studentId);
+		validateStatusIsPending(enrollment);
+		enrollmentCommandService.confirm(enrollment);
+		return EnrollmentConverter.toEnrollmentResDto(enrollment);
+	}
+
 	private void validateNoDuplicate(final Long studentId, final Long courseId) {
 		if (enrollmentQueryService.existsActive(studentId, courseId)) {
 			throw new EnrollmentException(ErrorCode.ENROLLMENT_DUPLICATE);
@@ -82,6 +91,18 @@ public class EnrollmentFacadeService {
 		long active = enrollmentQueryService.countActive(course.getCourseId());
 		if (active >= course.getCapacity()) {
 			throw new EnrollmentException(ErrorCode.ENROLLMENT_CAPACITY_FULL);
+		}
+	}
+
+	private void validateEnrollmentBelongToStudent(final Enrollment enrollment, final Long studentId) {
+		if (!enrollment.getStudent().getUserId().equals(studentId)) {
+			throw new EnrollmentException(ErrorCode.ACCESS_DENIED);
+		}
+	}
+
+	private void validateStatusIsPending(final Enrollment enrollment) {
+		if (!enrollment.isPending()) {
+			throw new EnrollmentException(ErrorCode.ENROLLMENT_INVALID_STATE);
 		}
 	}
 }
