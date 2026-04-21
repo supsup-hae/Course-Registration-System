@@ -39,11 +39,7 @@ public class CourseConverter {
 			.build();
 	}
 
-	public CourseInfoDto toCourseInfoDto(
-		final Course course,
-		final UserInfoDto creatorInfo,
-		final long currentEnrollmentCount
-	) {
+	public CourseInfoDto toCourseInfoDto(final Course course, final UserInfoDto creatorInfo) {
 		return CourseInfoDto.builder()
 			.courseId(course.getCourseId())
 			.creator(creatorInfo)
@@ -55,7 +51,22 @@ public class CourseConverter {
 			.startDate(course.getStartDate())
 			.endDate(course.getEndDate())
 			.createdAt(course.getCreatedAt())
-			.currentEnrollmentCount(currentEnrollmentCount)
+			.build();
+	}
+
+	public CourseInfoDto withEnrollmentCount(final CourseInfoDto dto, final long count) {
+		return CourseInfoDto.builder()
+			.courseId(dto.courseId())
+			.creator(dto.creator())
+			.title(dto.title())
+			.description(dto.description())
+			.price(dto.price())
+			.capacity(dto.capacity())
+			.status(dto.status())
+			.startDate(dto.startDate())
+			.endDate(dto.endDate())
+			.createdAt(dto.createdAt())
+			.currentEnrollmentCount(count)
 			.build();
 	}
 }
