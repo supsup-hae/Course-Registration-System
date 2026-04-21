@@ -9,4 +9,6 @@ public interface EnrollmentQueryService {
 	boolean existsActive(Long studentId, Long courseId);
 
 	Enrollment findWithStudentById(Long enrollmentId);
+
+	Enrollment findWithCourseAndStudentByIdForUpdate(Long enrollmentId);
 }

@@ -40,7 +40,17 @@ public class EnrollmentQueryServiceImpl implements EnrollmentQueryService {
 	public Enrollment findWithStudentById(final Long enrollmentId) {
 		Enrollment enrollment = enrollmentRepository.findWithStudentById(enrollmentId)
 			.orElseThrow(() -> new EnrollmentException(ErrorCode.ENROLLMENT_NOT_FOUND));
-		log.info("[Enrollment] 단건 조회 : enrollmentId = {}", enrollmentId);
+		log.info("[Enrollment] 수강신청 조회 (Student 포함) : enrollmentId = {}", enrollment.getEnrollmentId());
+		return enrollment;
+	}
+
+	@Override
+	@Transactional
+	public Enrollment findWithCourseAndStudentByIdForUpdate(final Long enrollmentId) {
+		Enrollment enrollment = enrollmentRepository.findWithCourseAndStudentByIdForUpdate(enrollmentId)
+			.orElseThrow(() -> new EnrollmentException(ErrorCode.ENROLLMENT_NOT_FOUND));
+		log.info("[Enrollment] 수강신청 조회 (Course, Student 포함, FOR UPDATE) : enrollmentId = {}",
+			enrollment.getEnrollmentId());
 		return enrollment;
 	}
 }

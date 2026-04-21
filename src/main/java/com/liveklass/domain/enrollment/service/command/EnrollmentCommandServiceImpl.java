@@ -43,4 +43,10 @@ public class EnrollmentCommandServiceImpl implements EnrollmentCommandService {
 		enrollment.confirm();
 		log.info("[Enrollment] 확정 완료 : enrollmentId = {}", enrollment.getEnrollmentId());
 	}
+
+	@Override
+	public void cancel(final Enrollment enrollment) {
+		enrollment.cancelByUser();
+		log.info("[Enrollment] 수강신청 취소 : enrollmentId = {}", enrollment.getEnrollmentId());
+	}
 }
